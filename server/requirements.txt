@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+openai
+chromadb
+langchain
+langchain-openai
+langchain-chroma
+beautifulsoup4
+requests
+python-dotenv
+pandas
+openpyxl
