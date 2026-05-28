@@ -11,7 +11,13 @@ def odisha_tourism_knowledge(query: str) -> str:
     """Search for information about Odisha heritage, culture, food, and dress codes."""
     retriever = get_retriever()
     docs = retriever.invoke(query)
-    return "\n\n".join([doc.page_content for doc in docs])
+    
+    result = []
+    for doc in docs:
+        source_url = doc.metadata.get("url", "https://odishatourism.gov.in/")
+        result.append(f"Content: {doc.page_content}\nSource URL: {source_url}")
+        
+    return "\n\n".join(result)
 
 def create_odisha_agent():
     # 1. Setup tools

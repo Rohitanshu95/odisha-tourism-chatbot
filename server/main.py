@@ -2,18 +2,26 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from src.api.chat_routes import router as chat_router
+from src.config.db import connect_to_mongo, close_mongo_connection
 
-app = FastAPI(title="Odisha Tourism Chatbot API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect_to_mongo()
+    yield
+    await close_mongo_connection()
+
+app = FastAPI(title="Odisha Tourism Chatbot API", lifespan=lifespan)
 
 # Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with actual frontend URL in production
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -7,6 +7,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const messagesEndRef = useRef(null);
 
@@ -17,6 +18,19 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation(`${position.coords.latitude},${position.coords.longitude}`);
+        },
+        (error) => {
+          console.log("Geolocation error:", error);
+        }
+      );
+    }
+  }, []);
 
   const handleSend = async (e, customText = null) => {
     e?.preventDefault();
@@ -33,7 +47,8 @@ function App() {
     try {
       const response = await axios.post('http://localhost:8000/api/v1/chat', {
         session_id: sessionId,
-        message: textToSend
+        message: textToSend,
+        user_location: userLocation
       });
 
       const botMsg = { id: Date.now() + 1, text: response.data.response, sender: 'bot' };

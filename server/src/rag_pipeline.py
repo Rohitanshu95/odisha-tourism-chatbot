@@ -41,7 +41,8 @@ def initialize_knowledge_base():
             page_content=item["content"],
             metadata={
                 "category": item["category"],
-                "topic": item["topic"]
+                "topic": item["topic"],
+                "url": item.get("url", "https://odishatourism.gov.in/")
             }
         )
         documents.append(doc)

@@ -10,3 +10,9 @@ requests
 python-dotenv
 pandas
 openpyxl
+motor
+pydantic
+pydantic-settings
+email-validator
+better_profanity
+bleach

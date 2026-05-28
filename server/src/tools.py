@@ -1,9 +1,18 @@
+import os
 import requests
 from langchain.tools import tool
 
-# Helper function for geocoding
+# Helper function for geocoding (Fallback)
 def get_coordinates(location: str):
     """Get latitude and longitude for a location using OpenStreetMap Nominatim API."""
+    if "," in location:
+        parts = location.split(",")
+        if len(parts) == 2:
+            try:
+                return float(parts[0].strip()), float(parts[1].strip())
+            except ValueError:
+                pass
+
     url = f"https://nominatim.openstreetmap.org/search"
     headers = {'User-Agent': 'OdishaTourismChatbot/1.0'}
     params = {'q': f"{location}, Odisha, India", 'format': 'json', 'limit': 1}
@@ -19,7 +28,22 @@ def get_coordinates(location: str):
 
 @tool
 def get_current_weather(location: str) -> str:
-    """Gets the REAL current weather for a specific location in Odisha using Open-Meteo API."""
+    """Gets the REAL current weather for a specific location in Odisha."""
+    # Try OpenWeatherMap first if key exists
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if api_key:
+        try:
+            url = f"https://api.openweathermap.org/data/2.5/weather?q={location},IN&appid={api_key}&units=metric"
+            response = requests.get(url)
+            data = response.json()
+            if response.status_code == 200:
+                temp = data["main"]["temp"]
+                desc = data["weather"][0]["description"]
+                return f"According to OpenWeatherMap, the current weather in {location} is {temp}°C with {desc}."
+        except Exception as e:
+            print(f"OpenWeatherMap API error: {e}")
+            
+    # Fallback to Open-Meteo
     lat, lon = get_coordinates(location)
     if not lat or not lon:
         return f"Sorry, I couldn't find the location coordinates for {location} to check the weather."
@@ -40,7 +64,22 @@ def get_current_weather(location: str) -> str:
 
 @tool
 def get_distance_and_route(origin: str, destination: str) -> str:
-    """Gets the REAL driving distance and estimated travel time between two locations using OSRM API."""
+    """Gets the REAL driving distance and estimated travel time between two locations."""
+    # Try Google Maps API first if key exists
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    if api_key:
+        try:
+            url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origin}&destinations={destination}&key={api_key}"
+            response = requests.get(url)
+            data = response.json()
+            if data.get("status") == "OK" and data["rows"][0]["elements"][0]["status"] == "OK":
+                dist = data["rows"][0]["elements"][0]["distance"]["text"]
+                dur = data["rows"][0]["elements"][0]["duration"]["text"]
+                return f"According to Google Maps, the driving distance from {origin} to {destination} is {dist}, and it will take approximately {dur}."
+        except Exception as e:
+            print(f"Google Maps API error: {e}")
+
+    # Fallback to OSRM
     lat1, lon1 = get_coordinates(origin)
     lat2, lon2 = get_coordinates(destination)
     
