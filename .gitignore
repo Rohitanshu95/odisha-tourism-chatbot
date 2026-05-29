@@ -14,3 +14,12 @@ __pycache__
 *.pyd
 *.pyo
 docs/
+__pycache__
+phases_gemini.md
+PRD_gemini.md
+PRD.md
+plan-roadmap.md
+plan-chatbot-features.md
+PLAN-chatbot-features.md
+PLAN-map-distance.md
+phases.md

@@ -1,5 +1,5 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
+from src.llm.client import get_llm
 from langchain.tools import tool
 
 from src.tools import get_current_weather, get_distance_and_route, estimate_trip_budget
@@ -28,8 +28,8 @@ def create_odisha_agent():
     
     tools = [weather_tool, distance_tool, budget_tool, rag_tool]
     
-    # 2. Setup LLM
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+    # 2. Setup LLM via central client
+    llm = get_llm(model_name="gemini-2.5-flash", temperature=0)
     
     # 3. Create Agent using LangGraph
     agent_executor = create_react_agent(llm, tools, prompt=ODISHA_TOURISM_SYSTEM_PROMPT)

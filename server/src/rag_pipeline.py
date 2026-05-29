@@ -1,11 +1,13 @@
 import os
 import json
-from dotenv import load_dotenv
+from src.settings import get_settings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-load_dotenv()
+# Ensure env vars are loaded via our robust configuration
+settings = get_settings()
+os.environ["GOOGLE_API_KEY"] = settings.GOOGLE_API_KEY
 
 # Setup paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

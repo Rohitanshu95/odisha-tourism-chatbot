@@ -71,8 +71,9 @@ async def chat_endpoint(request: ChatRequest):
     history = chat_histories[request.session_id]
     meta = session_metadata[request.session_id]
     
+    requires_login = False
     if meta["is_guest"] and meta["question_count"] >= 5:
-        return ChatResponse(response="You have reached the limit of 5 questions as a guest. Please provide your Name, Email, and Mobile to continue.", requires_login=True)
+        requires_login = True
     
     meta["question_count"] += 1
 
@@ -88,7 +89,14 @@ async def chat_endpoint(request: ChatRequest):
         result = await agent_executor.ainvoke({"messages": messages})
         
         # The last message in the returned state is the AI's response
-        output_message = result["messages"][-1].content
+        output_content = result["messages"][-1].content
+        if isinstance(output_content, list):
+            output_message = " ".join([
+                item.get("text", "") for item in output_content 
+                if isinstance(item, dict) and item.get("type") == "text"
+            ])
+        else:
+            output_message = str(output_content)
         
         history.append(HumanMessage(content=request.message))
         history.append(AIMessage(content=output_message))
@@ -106,13 +114,13 @@ async def chat_endpoint(request: ChatRequest):
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
             
-        return ChatResponse(response=output_message)
+        return ChatResponse(response=output_message, requires_login=requires_login)
         
     except Exception as e:
         import traceback
         traceback.print_exc()
         print(f"Agent error: {e}")
-        return ChatResponse(response="I'm currently experiencing technical difficulties processing your request. For immediate assistance or urgent queries, please reach out to our official support team at support@odishatourism.gov.in")
+        return ChatResponse(response="I'm having trouble retrieving that specific information right now. Please [click here for more info](https://odishatourism.gov.in) on the official portal.")
 
 class EndSessionRequest(BaseModel):
     session_id: str
@@ -123,35 +131,7 @@ async def end_session(request: EndSessionRequest):
     meta = session_metadata.get(session_id, {})
     history = chat_histories.get(session_id, [])
     
-    # Check if we should save anything
-    if session_id in session_metadata or session_id in chat_histories:
-        db = get_db()
-        if db is not None:
-            user_id = meta.get("user_id", "unknown")
-            
-            if len(history) > 0 and agent_executor:
-                summary_prompt = "Please provide a brief 2-sentence summary of the user's queries and the assistance provided in this conversation."
-                messages = history + [HumanMessage(content=summary_prompt)]
-                
-                try:
-                    result = await agent_executor.ainvoke({"messages": messages})
-                    summary_text = result["messages"][-1].content
-                except Exception as e:
-                    print(f"Failed to generate summary: {e}")
-                    summary_text = "System failed to summarize the conversation."
-            else:
-                summary_text = "User interacted with the widget but did not ask any questions."
-                
-            summary_entry = ChatSummaryModel(
-                user_id=user_id,
-                session_id=session_id,
-                summary=summary_text
-            )
-            
-            try:
-                await db["chat_summaries"].insert_one(summary_entry.model_dump())
-            except Exception as e:
-                print(f"Failed to save summary to db: {e}")
+    # Database saving of chat has been intentionally removed per Phase 2 requirements (Zero persistence).
                 
     # Clean up ephemeral memory
     if session_id in chat_histories:

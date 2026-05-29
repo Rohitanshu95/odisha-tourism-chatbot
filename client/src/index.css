@@ -593,3 +593,29 @@ body {
 .login-form input:focus {
   border-color: var(--primary);
 }
+
+/* Suggestion Chips */
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.suggestion-chip {
+  background-color: var(--bg-light);
+  border: 1px solid var(--chat-border);
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.suggestion-chip:hover {
+  background-color: var(--primary);
+  border-color: var(--primary-dark);
+  color: white;
+}

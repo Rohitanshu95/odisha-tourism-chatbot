@@ -113,7 +113,15 @@ function Widget() {
         user_location: userLocation
       });
 
-      const botMsg = { id: Date.now() + 1, text: response.data.response, sender: 'bot' };
+      let responseText = response.data.response;
+      let suggestions = [];
+      if (responseText.includes('SUGGESTIONS:')) {
+        const parts = responseText.split('SUGGESTIONS:');
+        responseText = parts[0].trim();
+        suggestions = parts[1].trim().split('\n').map(s => s.replace(/^-/, '').trim()).filter(s => s.length > 0);
+      }
+
+      const botMsg = { id: Date.now() + 1, text: responseText, suggestions, sender: 'bot' };
       setMessages(prev => [...prev, botMsg]);
 
       if (response.data.requires_login) {
@@ -216,7 +224,7 @@ function Widget() {
               <p>
                 {authMode === 'authenticated'
                   ? 'Ready to discover the hidden gems of Odisha today?'
-                  : 'Welcome to the Soul of Incredible India! How can I help you plan your trip?'}
+                  : 'Jay Jagannath! 🙏 Welcome to Odisha Tourism. Atithi Devo Bhava. How can I help you plan your trip?'}
               </p>
 
               <div className="features-grid">
@@ -254,6 +262,15 @@ function Widget() {
                   <span className="message-time">
                     {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
+                  {msg.suggestions && msg.suggestions.length > 0 && (
+                    <div className="suggestion-chips">
+                      {msg.suggestions.map((suggestion, idx) => (
+                        <button key={idx} className="suggestion-chip" onClick={() => handleSend(null, suggestion)}>
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -269,35 +286,37 @@ function Widget() {
           )}
         </div>
 
-        <form className="input-area" onSubmit={handleSend}>
-          <div className="input-row">
-            <div className="input-wrapper">
-              <input
-                type="text"
-                className="chat-input"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything..."
-                disabled={isLoading}
-                aria-label="Chat input field"
-              />
-              {recognitionRef.current && (
-                <button
-                  type="button"
-                  className={`action-button ${isRecording ? 'recording' : ''}`}
-                  onClick={toggleRecording}
-                  aria-label={isRecording ? "Stop recording" : "Start voice input"}
-                  title="Voice Input"
-                >
-                  {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-                </button>
-              )}
+        {(authMode !== 'selection' && authMode !== 'login') && (
+          <form className="input-area" onSubmit={handleSend}>
+            <div className="input-row">
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  className="chat-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask me anything..."
+                  disabled={isLoading}
+                  aria-label="Chat input field"
+                />
+                {recognitionRef.current && (
+                  <button
+                    type="button"
+                    className={`action-button ${isRecording ? 'recording' : ''}`}
+                    onClick={toggleRecording}
+                    aria-label={isRecording ? "Stop recording" : "Start voice input"}
+                    title="Voice Input"
+                  >
+                    {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                  </button>
+                )}
+              </div>
+              <button type="submit" className="send-button" disabled={!input.trim() || isLoading} aria-label="Send message">
+                <Send size={18} />
+              </button>
             </div>
-            <button type="submit" className="send-button" disabled={!input.trim() || isLoading || authMode === 'selection' || authMode === 'login'} aria-label="Send message">
-              <Send size={18} />
-            </button>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
 
       {!isOpen && (

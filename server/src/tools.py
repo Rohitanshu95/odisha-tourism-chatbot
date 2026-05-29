@@ -64,22 +64,7 @@ def get_current_weather(location: str) -> str:
 
 @tool
 def get_distance_and_route(origin: str, destination: str) -> str:
-    """Gets the REAL driving distance and estimated travel time between two locations."""
-    # Try Google Maps API first if key exists
-    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-    if api_key:
-        try:
-            url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origin}&destinations={destination}&key={api_key}"
-            response = requests.get(url)
-            data = response.json()
-            if data.get("status") == "OK" and data["rows"][0]["elements"][0]["status"] == "OK":
-                dist = data["rows"][0]["elements"][0]["distance"]["text"]
-                dur = data["rows"][0]["elements"][0]["duration"]["text"]
-                return f"According to Google Maps, the driving distance from {origin} to {destination} is {dist}, and it will take approximately {dur}."
-        except Exception as e:
-            print(f"Google Maps API error: {e}")
-
-    # Fallback to OSRM
+    """Gets the REAL driving distance and estimated travel time between two locations using OpenStreetMap and OSRM."""
     lat1, lon1 = get_coordinates(origin)
     lat2, lon2 = get_coordinates(destination)
     
@@ -94,7 +79,13 @@ def get_distance_and_route(origin: str, destination: str) -> str:
         if data.get("code") == "Ok" and len(data["routes"]) > 0:
             distance_km = data["routes"][0]["distance"] / 1000
             duration_hrs = data["routes"][0]["duration"] / 3600
-            return f"The actual driving distance from {origin} to {destination} is {distance_km:.1f} km. It will take approximately {duration_hrs:.1f} hours by road."
+            
+            # Generate OpenStreetMap routing URL
+            osm_url = f"https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route={lat1}%2C{lon1}%3B{lat2}%2C{lon2}"
+            
+            return (f"The actual driving distance from {origin} to {destination} is {distance_km:.1f} km. "
+                    f"It will take approximately {duration_hrs:.1f} hours by road.\n\n"
+                    f"Map Link: {osm_url}")
     except Exception as e:
         print(f"OSRM API error: {e}")
         
