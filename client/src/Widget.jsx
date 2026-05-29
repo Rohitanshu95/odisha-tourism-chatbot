@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff } from 'lucide-react';
+import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles } from 'lucide-react';
 import './index.css';
 
 function Widget() {
@@ -9,10 +9,12 @@ function Widget() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-  const [locationConsent, setLocationConsent] = useState('pending'); // pending, granted, denied
-  const [authMode, setAuthMode] = useState('selection'); // selection, guest, login, authenticated
+  const [locationConsent, setLocationConsent] = useState('pending');
+  const [authMode, setAuthMode] = useState('selection');
   const [authData, setAuthData] = useState({ name: '', email: '', mobile: '' });
   const [isRecording, setIsRecording] = useState(false);
+  const [isTTS, setIsTTS] = useState(false);
+  const [theme, setTheme] = useState('light');
   const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -47,7 +49,7 @@ function Widget() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'en-IN'; // Multilingual code switching is handled by LLM. User can speak in Hindi or English (depending on browser support). We set default to en-IN.
+      recognition.lang = 'en-IN';
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
@@ -115,14 +117,35 @@ function Widget() {
 
       let responseText = response.data.response;
       let suggestions = [];
-      if (responseText.includes('SUGGESTIONS:')) {
+      let images = [];
+      
+      if (responseText.includes('IMAGES:')) {
+        const parts = responseText.split('IMAGES:');
+        responseText = parts[0].trim();
+        const afterImages = parts[1];
+        if (afterImages.includes('SUGGESTIONS:')) {
+            const splitAgain = afterImages.split('SUGGESTIONS:');
+            images = splitAgain[0].trim().split(',').map(s => s.trim()).filter(s => s.length > 0);
+            suggestions = splitAgain[1].trim().split('\n').map(s => s.replace(/^-/, '').trim()).filter(s => s.length > 0);
+        } else {
+            images = afterImages.trim().split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+      } else if (responseText.includes('SUGGESTIONS:')) {
         const parts = responseText.split('SUGGESTIONS:');
         responseText = parts[0].trim();
         suggestions = parts[1].trim().split('\n').map(s => s.replace(/^-/, '').trim()).filter(s => s.length > 0);
       }
 
-      const botMsg = { id: Date.now() + 1, text: responseText, suggestions, sender: 'bot' };
+      const botMsg = { id: Date.now() + 1, text: responseText, suggestions, images, sender: 'bot' };
       setMessages(prev => [...prev, botMsg]);
+
+      // TTS Output
+      if (isTTS) {
+          const cleanText = responseText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'en-IN';
+          window.speechSynthesis.speak(utterance);
+      }
 
       if (response.data.requires_login) {
         setAuthMode('login');
@@ -158,7 +181,6 @@ function Widget() {
         await axios.post('http://localhost:8000/api/v1/chat/end', {
           session_id: sessionId
         });
-        // Clear chat to start fresh next time
         setMessages([]);
         setAuthMode('selection');
       } catch (error) {
@@ -168,7 +190,7 @@ function Widget() {
   };
 
   return (
-    <div className="widget-container" role="region" aria-label="Chatbot Widget">
+    <div className={`widget-container theme-${theme}`} role="region" aria-label="Chatbot Widget">
       <div className={`chat-window ${isOpen ? 'open' : 'closed'}`} aria-hidden={!isOpen}>
         <header className="header">
           <div className="header-title">
@@ -178,9 +200,19 @@ function Widget() {
               <p className="header-subtitle">Official AI Assistant</p>
             </div>
           </div>
-          <button className="close-btn" onClick={handleClose} title="End Chat & Close" aria-label="Close Chat">
-            <X size={24} />
-          </button>
+          <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className="action-btn" onClick={() => setIsTTS(!isTTS)} title="Toggle Voice Output" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              {isTTS ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </button>
+            <button className="action-btn" onClick={() => {
+              setTheme(prev => prev === 'light' ? 'dark' : prev === 'dark' ? 'festive' : 'light');
+            }} title="Toggle Theme" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              {theme === 'light' ? <Sun size={20} /> : theme === 'dark' ? <Moon size={20} /> : <Sparkles size={20} />}
+            </button>
+            <button className="close-btn" onClick={handleClose} title="End Chat & Close" aria-label="Close Chat" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+          </div>
         </header>
 
         {locationConsent === 'pending' && (
@@ -251,10 +283,8 @@ function Widget() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`message-wrapper ${msg.sender}`}>
                   <div className="message">
-                    {/* Basic markdown parsing for bold text and links generated by LLM */}
                     {msg.text.split('\n').map((line, i) => {
                       let htmlLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                      // Simple regex for Markdown links [text](url)
                       htmlLine = htmlLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
                       return <p key={i} dangerouslySetInnerHTML={{ __html: htmlLine }} />;
                     })}
@@ -262,6 +292,13 @@ function Widget() {
                   <span className="message-time">
                     {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
+                  {msg.images && msg.images.length > 0 && (
+                    <div className="image-carousel" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '8px', paddingBottom: '4px' }}>
+                      {msg.images.map((imgUrl, idx) => (
+                        <img key={idx} src={imgUrl} alt="Location" style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  )}
                   {msg.suggestions && msg.suggestions.length > 0 && (
                     <div className="suggestion-chips">
                       {msg.suggestions.map((suggestion, idx) => (

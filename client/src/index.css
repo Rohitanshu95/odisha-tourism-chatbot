@@ -1,19 +1,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap');
 
 :root {
-  --primary: #1e3354;
-  --primary-dark: #11223c;
-  --accent: #dca743;
-  --accent-dark: #b88a33;
-  --secondary: #2c4c3b;
-  --secondary-dark: #1a3024;
-  --bg-light: #f5eedf;
+  /* Odisha Heritage Palette */
+  --primary: #8e2b24;
+  /* Terracotta Red / Temple Maroon */
+  --primary-dark: #661d18;
+  --accent: #f5b041;
+  /* Marigold Yellow / Sand */
+  --accent-dark: #d49333;
+  --secondary: #2c5438;
+  /* Forest Green (Nature) */
+  --secondary-dark: #1b3824;
+  --bg-light: #fbf7f0;
+  /* Sandstone */
   --text-dark: #2b2b2b;
   --text-light: #ffffff;
   --text-muted: #5c5c5c;
-  --chat-border: #d0b894;
-  --bot-msg-bg: transparent;
+  --chat-border: #e8dbce;
+  --bot-msg-bg: #ffffff;
+  --user-msg-bg: #2c5438;
+  /* Green for user messages */
+}
+
+.theme-dark {
+  --primary: #0a111a;
+  --primary-dark: #05090f;
+  --accent: #b08535;
+  --accent-dark: #8c6a29;
+  --secondary: #1a2e23;
+  --secondary-dark: #0f1c15;
+  --bg-light: #1c1c1c;
+  --text-dark: #e0e0e0;
+  --text-muted: #a0a0a0;
+  --chat-border: #333333;
   --user-msg-bg: #2c4c3b;
+}
+
+.theme-festive {
+  --primary: #a81c1c;
+  --primary-dark: #7a1414;
+  --accent: #facc15;
+  --accent-dark: #eab308;
+  --secondary: #ea580c;
+  --secondary-dark: #c2410c;
+  --bg-light: #fffbeb;
+  --text-dark: #451a03;
+  --text-muted: #78350f;
+  --chat-border: #fde68a;
+  --user-msg-bg: #a81c1c;
 }
 
 * {
@@ -106,7 +140,7 @@ body {
 /* Header */
 .header {
   padding: 16px 20px;
-  background: linear-gradient(135deg, #1e3354 0%, #11223c 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: var(--accent);
   display: flex;
   align-items: center;
@@ -122,9 +156,9 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(var(--accent) 1px, transparent 1px);
-  background-size: 12px 12px;
-  opacity: 0.15;
+  /* Subtle ethnic / ikat inspired overlay */
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.05) 5px, rgba(255, 255, 255, 0.05) 10px);
+  opacity: 1;
   pointer-events: none;
 }
 

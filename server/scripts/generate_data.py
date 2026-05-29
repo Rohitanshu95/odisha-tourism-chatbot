@@ -50,4 +50,5 @@ def generate_mock_knowledge_base(output_dir: str = "../data"):
     print(f"Successfully generated clean knowledge base at {file_path}")
 
 if __name__ == "__main__":
-    generate_mock_knowledge_base("data")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    generate_mock_knowledge_base(os.path.join(base_dir, "data"))

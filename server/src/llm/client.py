@@ -1,6 +1,6 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.settings import get_settings
+from src.config.settings import get_settings
 
 # Ensure that the environment variable is explicitly set so langchain doesn't fail
 settings = get_settings()

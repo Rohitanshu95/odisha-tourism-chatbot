@@ -106,3 +106,36 @@ def estimate_trip_budget(destination: str, days: int, travelers: int) -> str:
     total_premium = (base_cost_per_day + 2000) * days * travelers
     
     return f"For a {days}-day trip to {destination} for {travelers} person(s), a budget-friendly estimate is around ₹{total_budget} INR, while a more comfortable/premium trip would be around ₹{total_premium} INR."
+
+@tool
+def fetch_location_images(location: str) -> str:
+    """Fetches image URLs for a tourist location in Odisha to display to the user."""
+    url = "https://en.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "generator": "search",
+        "gsrsearch": f"{location} Odisha",
+        "gsrnamespace": 6,
+        "gsrlimit": 3,
+        "prop": "imageinfo",
+        "iiprop": "url",
+        "format": "json"
+    }
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        pages = data.get("query", {}).get("pages", {})
+        urls = []
+        for page_id, page in pages.items():
+            imageinfo = page.get("imageinfo", [])
+            if imageinfo and len(imageinfo) > 0:
+                url = imageinfo[0].get("url")
+                if url.endswith((".jpg", ".jpeg", ".png", ".webp", ".JPG")):
+                    urls.append(url)
+        
+        if urls:
+            return f"Images found for {location}: " + ", ".join(urls)
+    except Exception as e:
+        print(f"Image fetch error: {e}")
+    
+    return f"No images found for {location}."
