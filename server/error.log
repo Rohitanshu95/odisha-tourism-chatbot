@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\rohitanshu.dhar\Desktop\projects\06-odisha-tourism-chatbot\server\src\api\chat_routes.py", line 108, in chat_endpoint
+    asyncio.create_task(db["telemetry"].insert_one(log_entry.model_dump()))
+  File "C:\Users\rohitanshu.dhar\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\tasks.py", line 384, in create_task
+    task = loop.create_task(coro)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rohitanshu.dhar\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\base_events.py", line 437, in create_task
+    task = tasks.Task(coro, loop=self, name=name, context=context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: a coroutine was expected, got <Future pending cb=[_chain_future.<locals>._call_check_cancel() at C:\Users\rohitanshu.dhar\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\futures.py:387]>

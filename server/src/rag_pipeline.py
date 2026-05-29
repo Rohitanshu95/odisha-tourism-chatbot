@@ -1,7 +1,7 @@
 import os
 import json
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
@@ -14,7 +14,7 @@ CHROMA_PATH = os.path.join(BASE_DIR, "vector_store")
 
 def get_vector_store():
     """Returns the Chroma vector store instance."""
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     return Chroma(
         collection_name="odisha_tourism",
         embedding_function=embeddings,

@@ -1,0 +1,113 @@
+.admin-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Open Sans', sans-serif;
+  color: #333;
+}
+
+.admin-loading, .admin-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+}
+
+.admin-error {
+  color: #dc3545;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.admin-header h1 {
+  font-size: 1.8rem;
+  color: #0b5fff;
+}
+
+.admin-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #f8f9fa;
+  padding: 15px 25px;
+  border-radius: 8px;
+  border: 1px solid #e2e2e4;
+}
+
+.stat-card h3 {
+  font-size: 0.85rem;
+  color: #6b6c7e;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #272833;
+}
+
+.admin-main h2 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: #272833;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table th, .admin-table td {
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.admin-table th {
+  background: #f1f2f5;
+  font-weight: 600;
+  color: #6b6c7e;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.admin-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.summary-cell {
+  max-width: 400px;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px !important;
+  color: #6b6c7e;
+  font-style: italic;
+}

@@ -55,6 +55,7 @@ async def login_user(user: UserCaptureModel, session_id: str):
         session_metadata[session_id] = {"is_guest": False, "question_count": 0, "user_id": user_dict["_id"]}
     else:
         session_metadata[session_id]["is_guest"] = False
+        session_metadata[session_id]["user_id"] = user_dict["_id"]
         
     return {"status": "success", "message": "User authenticated", "user_id": user_dict["_id"]}
 
@@ -84,7 +85,7 @@ async def chat_endpoint(request: ChatRequest):
         # For langgraph react agent, state is just a list of messages
         messages = history + [HumanMessage(content=enriched_message)]
         
-        result = agent_executor.invoke({"messages": messages})
+        result = await agent_executor.ainvoke({"messages": messages})
         
         # The last message in the returned state is the AI's response
         output_message = result["messages"][-1].content
@@ -103,12 +104,13 @@ async def chat_endpoint(request: ChatRequest):
                 query=request.message,
                 is_guest=meta["is_guest"]
             )
-            import asyncio
-            asyncio.create_task(db["telemetry"].insert_one(log_entry.model_dump()))
+            await db["telemetry"].insert_one(log_entry.model_dump())
             
         return ChatResponse(response=output_message)
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Agent error: {e}")
         return ChatResponse(response="I'm currently experiencing technical difficulties processing your request. For immediate assistance or urgent queries, please reach out to our official support team at support@odishatourism.gov.in")
 
@@ -118,32 +120,38 @@ class EndSessionRequest(BaseModel):
 @router.post("/chat/end")
 async def end_session(request: EndSessionRequest):
     session_id = request.session_id
-    if session_id not in chat_histories:
-        return {"status": "success", "message": "No active session found"}
-        
     meta = session_metadata.get(session_id, {})
-    history = chat_histories[session_id]
+    history = chat_histories.get(session_id, [])
     
-    if not meta.get("is_guest", True) and len(history) > 0 and agent_executor:
+    # Check if we should save anything
+    if session_id in session_metadata or session_id in chat_histories:
         db = get_db()
         if db is not None:
-            summary_prompt = "Please provide a brief 2-sentence summary of the user's queries and the assistance provided in this conversation."
-            messages = history + [HumanMessage(content=summary_prompt)]
+            user_id = meta.get("user_id", "unknown")
+            
+            if len(history) > 0 and agent_executor:
+                summary_prompt = "Please provide a brief 2-sentence summary of the user's queries and the assistance provided in this conversation."
+                messages = history + [HumanMessage(content=summary_prompt)]
+                
+                try:
+                    result = await agent_executor.ainvoke({"messages": messages})
+                    summary_text = result["messages"][-1].content
+                except Exception as e:
+                    print(f"Failed to generate summary: {e}")
+                    summary_text = "System failed to summarize the conversation."
+            else:
+                summary_text = "User interacted with the widget but did not ask any questions."
+                
+            summary_entry = ChatSummaryModel(
+                user_id=user_id,
+                session_id=session_id,
+                summary=summary_text
+            )
             
             try:
-                result = agent_executor.invoke({"messages": messages})
-                summary_text = result["messages"][-1].content
-                
-                user_id = meta.get("user_id", "unknown")
-                summary_entry = ChatSummaryModel(
-                    user_id=user_id,
-                    session_id=session_id,
-                    summary=summary_text
-                )
-                
                 await db["chat_summaries"].insert_one(summary_entry.model_dump())
             except Exception as e:
-                print(f"Failed to generate/save summary: {e}")
+                print(f"Failed to save summary to db: {e}")
                 
     # Clean up ephemeral memory
     if session_id in chat_histories:

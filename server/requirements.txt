@@ -1,9 +1,9 @@
 fastapi
 uvicorn[standard]
-openai
 chromadb
 langchain
-langchain-openai
+langchain-google-genai
+google-genai
 langchain-chroma
 beautifulsoup4
 requests

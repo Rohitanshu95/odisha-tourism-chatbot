@@ -1,0 +1,316 @@
+import { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
+import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff } from 'lucide-react';
+import './index.css';
+
+function Widget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationConsent, setLocationConsent] = useState('pending'); // pending, granted, denied
+  const [authMode, setAuthMode] = useState('selection'); // selection, guest, login, authenticated
+  const [authData, setAuthData] = useState({ name: '', email: '', mobile: '' });
+  const [isRecording, setIsRecording] = useState(false);
+  const [sessionId] = useState(() => Math.random().toString(36).substring(7));
+  const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const endSessionOnUnload = () => {
+      if (messages.length > 0) {
+        const blob = new Blob([JSON.stringify({ session_id: sessionId })], { type: 'application/json' });
+        navigator.sendBeacon('http://localhost:8000/api/v1/chat/end', blob);
+      }
+    };
+    window.addEventListener('beforeunload', endSessionOnUnload);
+    return () => {
+      window.removeEventListener('beforeunload', endSessionOnUnload);
+    };
+  }, [messages.length, sessionId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, isLoading, isOpen]);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN'; // Multilingual code switching is handled by LLM. User can speak in Hindi or English (depending on browser support). We set default to en-IN.
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput((prev) => prev + (prev ? ' ' : '') + transcript);
+        setIsRecording(false);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const requestLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation(`${position.coords.latitude},${position.coords.longitude}`);
+          setLocationConsent('granted');
+        },
+        (error) => {
+          console.log("Geolocation error:", error);
+          setLocationConsent('denied');
+        }
+      );
+    } else {
+      setLocationConsent('denied');
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      recognitionRef.current?.start();
+      setIsRecording(true);
+    }
+  };
+
+  const handleSend = async (e, customText = null) => {
+    e?.preventDefault();
+    const textToSend = customText || input;
+
+    if (!textToSend.trim()) return;
+
+    const userMsg = { id: Date.now(), text: textToSend, sender: 'user' };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/v1/chat', {
+        session_id: sessionId,
+        message: textToSend,
+        user_location: userLocation
+      });
+
+      const botMsg = { id: Date.now() + 1, text: response.data.response, sender: 'bot' };
+      setMessages(prev => [...prev, botMsg]);
+
+      if (response.data.requires_login) {
+        setAuthMode('login');
+      }
+    } catch (error) {
+      console.error("Chat Error:", error);
+      const fallbackText = error.response?.data?.response || "I'm currently experiencing technical difficulties. If you have an urgent query, please reach out to our official support team at support@odishatourism.gov.in";
+      const errorMsg = {
+        id: Date.now() + 1,
+        text: fallbackText,
+        sender: 'bot'
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`http://localhost:8000/api/v1/auth/login?session_id=${sessionId}`, authData);
+      setAuthMode('authenticated');
+    } catch (error) {
+      console.error("Login Error:", error);
+    }
+  };
+
+  const handleClose = async () => {
+    setIsOpen(false);
+    if (messages.length > 0) {
+      try {
+        await axios.post('http://localhost:8000/api/v1/chat/end', {
+          session_id: sessionId
+        });
+        // Clear chat to start fresh next time
+        setMessages([]);
+        setAuthMode('selection');
+      } catch (error) {
+        console.error("Failed to end session:", error);
+      }
+    }
+  };
+
+  return (
+    <div className="widget-container" role="region" aria-label="Chatbot Widget">
+      <div className={`chat-window ${isOpen ? 'open' : 'closed'}`} aria-hidden={!isOpen}>
+        <header className="header">
+          <div className="header-title">
+            <img src="/botimage.png" alt="Logo" className="header-logo" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+            <div>
+              <h1 id="chatbot-title">Odisha Tourism</h1>
+              <p className="header-subtitle">Official AI Assistant</p>
+            </div>
+          </div>
+          <button className="close-btn" onClick={handleClose} title="End Chat & Close" aria-label="Close Chat">
+            <X size={24} />
+          </button>
+        </header>
+
+        {locationConsent === 'pending' && (
+          <div className="consent-banner" role="alert">
+            <span>Allow location for better travel routes?</span>
+            <div className="consent-buttons">
+              <button className="consent-allow" onClick={requestLocation} aria-label="Allow Location">Allow</button>
+              <button className="consent-skip" onClick={() => setLocationConsent('denied')} aria-label="Deny Location">Skip</button>
+            </div>
+          </div>
+        )}
+
+        <div className="chat-area" aria-live="polite">
+          {authMode === 'selection' ? (
+            <div className="auth-selection-screen">
+              <h2>Welcome to Odisha!</h2>
+              <p>How would you like to proceed?</p>
+              <div className="auth-buttons">
+                <button className="btn-primary" onClick={() => setAuthMode('login')}>Login / Register</button>
+                <button className="btn-secondary" onClick={() => setAuthMode('guest')}>Start as Guest</button>
+              </div>
+            </div>
+          ) : authMode === 'login' ? (
+            <div className="login-screen">
+              <h2>User Details</h2>
+              <p>Please provide your details to continue.</p>
+              <form onSubmit={handleLoginSubmit} className="login-form">
+                <input type="text" placeholder="Full Name" required value={authData.name} onChange={e => setAuthData({ ...authData, name: e.target.value })} />
+                <input type="email" placeholder="Email Address" required value={authData.email} onChange={e => setAuthData({ ...authData, email: e.target.value })} />
+                <input type="tel" placeholder="Mobile Number" required value={authData.mobile} onChange={e => setAuthData({ ...authData, mobile: e.target.value })} />
+                <button type="submit" className="btn-primary">Submit</button>
+              </form>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="welcome-screen">
+              <h2>
+                {authMode === 'authenticated' && authData.name
+                  ? `Namaskara, ${authData.name}!`
+                  : 'Namaskara, Explorer!'}
+              </h2>
+              <p>
+                {authMode === 'authenticated'
+                  ? 'Ready to discover the hidden gems of Odisha today?'
+                  : 'Welcome to the Soul of Incredible India! How can I help you plan your trip?'}
+              </p>
+
+              <div className="features-grid">
+                <button className="feature-card" onClick={() => handleSend(null, "I would like to plan a trip.")}>
+                  <Map className="feature-icon" size={20} />
+                  <span>Plan a Trip</span>
+                </button>
+                <button className="feature-card" onClick={() => handleSend(null, "What is the weather like?")}>
+                  <Sun className="feature-icon" size={20} />
+                  <span>Check Weather</span>
+                </button>
+                <button className="feature-card" onClick={() => handleSend(null, "Tell me about local food.")}>
+                  <Utensils className="feature-icon" size={20} />
+                  <span>Local Cuisine</span>
+                </button>
+                <button className="feature-card" onClick={() => handleSend(null, "Show me heritage sites.")}>
+                  <Info className="feature-icon" size={20} />
+                  <span>Heritage Info</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <div key={msg.id} className={`message-wrapper ${msg.sender}`}>
+                  <div className="message">
+                    {/* Basic markdown parsing for bold text and links generated by LLM */}
+                    {msg.text.split('\n').map((line, i) => {
+                      let htmlLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                      // Simple regex for Markdown links [text](url)
+                      htmlLine = htmlLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                      return <p key={i} dangerouslySetInnerHTML={{ __html: htmlLine }} />;
+                    })}
+                  </div>
+                  <span className="message-time">
+                    {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="typing-indicator" aria-label="Bot is typing">
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                </div>
+              )}
+              <div ref={messagesEndRef} tabIndex="-1" />
+            </>
+          )}
+        </div>
+
+        <form className="input-area" onSubmit={handleSend}>
+          <div className="input-row">
+            <div className="input-wrapper">
+              <input
+                type="text"
+                className="chat-input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything..."
+                disabled={isLoading}
+                aria-label="Chat input field"
+              />
+              {recognitionRef.current && (
+                <button
+                  type="button"
+                  className={`action-button ${isRecording ? 'recording' : ''}`}
+                  onClick={toggleRecording}
+                  aria-label={isRecording ? "Stop recording" : "Start voice input"}
+                  title="Voice Input"
+                >
+                  {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                </button>
+              )}
+            </div>
+            <button type="submit" className="send-button" disabled={!input.trim() || isLoading || authMode === 'selection' || authMode === 'login'} aria-label="Send message">
+              <Send size={18} />
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {!isOpen && (
+        <button
+          className="widget-toggle custom-logo-toggle"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open Chatbot"
+        >
+          <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default Widget;

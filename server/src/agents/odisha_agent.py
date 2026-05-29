@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
 from langchain.tools import tool
 
@@ -29,7 +29,7 @@ def create_odisha_agent():
     tools = [weather_tool, distance_tool, budget_tool, rag_tool]
     
     # 2. Setup LLM
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
     
     # 3. Create Agent using LangGraph
     agent_executor = create_react_agent(llm, tools, prompt=ODISHA_TOURISM_SYSTEM_PROMPT)
