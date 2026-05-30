@@ -27,6 +27,7 @@ class TelemetryLog(BaseModel):
     intent: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     is_guest: bool = True
+    is_fallback: bool = False
     
 class ChatSummaryModel(BaseModel):
     user_id: str

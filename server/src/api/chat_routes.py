@@ -110,7 +110,8 @@ async def chat_endpoint(request: ChatRequest):
             log_entry = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
-                is_guest=meta["is_guest"]
+                is_guest=meta["is_guest"],
+                is_fallback=False
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
             
@@ -120,6 +121,18 @@ async def chat_endpoint(request: ChatRequest):
         import traceback
         traceback.print_exc()
         print(f"Agent error: {e}")
+        
+        # Log the failure in telemetry
+        db = get_db()
+        if db is not None:
+            fallback_log = TelemetryLog(
+                session_id=request.session_id,
+                query=request.message,
+                is_guest=meta.get("is_guest", True),
+                is_fallback=True
+            )
+            await db["telemetry"].insert_one(fallback_log.model_dump())
+            
         return ChatResponse(response="I'm having trouble retrieving that specific information right now. Please [click here for more info](https://odishatourism.gov.in) on the official portal.")
 
 class EndSessionRequest(BaseModel):
