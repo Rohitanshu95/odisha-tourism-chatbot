@@ -498,13 +498,20 @@ function Widget() {
       </div>
 
       {!isOpen && (
-        <button
-          className="widget-toggle"
-          onClick={() => setIsOpen(true)}
-          aria-label="Open Chatbot"
-        >
-          <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover', padding: '2px'}}/>
-        </button>
+        <>
+          <div className="widget-tooltip" onClick={() => setIsOpen(true)}>
+            <strong>Namaste!</strong> How can I help?
+          </div>
+          <button
+            className="widget-toggle"
+            onClick={() => setIsOpen(true)}
+            aria-label="Open Chatbot"
+            style={{ position: 'relative' }}
+          >
+            <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', border: '6px solid #834026', objectFit: 'cover'}}/>
+            <div className="notification-dot" style={{position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', backgroundColor: '#F0B800', borderRadius: '50%', border: '3px solid #834026'}}></div>
+          </button>
+        </>
       )}
     </div>
   );

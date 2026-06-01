@@ -100,6 +100,47 @@ h1, h2, h3, .serif-text {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
+.widget-toggle:active {
+  transform: scale(0.95);
+}
+
+.widget-tooltip {
+  position: absolute;
+  bottom: 95px;
+  right: 5px;
+  background-color: #F0B800;
+  color: #4A2C10;
+  padding: 14px 28px;
+  border-radius: 40px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  white-space: nowrap;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  animation: floatTooltip 3s infinite ease-in-out;
+  cursor: pointer;
+  z-index: 10000;
+  transform-origin: bottom right;
+}
+
+.widget-tooltip strong {
+  font-weight: 800;
+}
+
+.widget-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  right: 35px;
+  border-width: 15px 15px 0 0;
+  border-style: solid;
+  border-color: #F0B800 transparent transparent transparent;
+}
+
+@keyframes floatTooltip {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 .widget-toggle.custom-logo-toggle {
   background: #ffffff;
   border: 2px solid #ffffff;
