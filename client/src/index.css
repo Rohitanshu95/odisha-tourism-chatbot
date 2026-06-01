@@ -116,11 +116,11 @@ h1, h2, h3, .serif-text {
 
 /* Phone Container (Replaces old chat-window) */
 .phone {
-  width: 360px;
-  height: 640px;
-  max-height: calc(100vh - 100px);
+  width: 480px;
+  height: 720px;
+  max-height: calc(100vh - 40px);
   background: var(--cream);
-  border-radius: 40px;
+  border-radius: 24px;
   border: 1.5px solid var(--border);
   overflow: hidden;
   display: flex;

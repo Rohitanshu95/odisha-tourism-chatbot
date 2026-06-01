@@ -10,13 +10,13 @@ function Widget() {
   const [isLoading, setIsLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationConsent, setLocationConsent] = useState('pending');
-  // authMode: 'selection', 'login', 'guest', 'authenticated'
   const [authMode, setAuthMode] = useState('selection');
-  const [authData, setAuthData] = useState({ name: '', email: '', mobile: '' });
+  const [authData, setAuthData] = useState({name: '', email: '', mobile: ''});
   const [isRecording, setIsRecording] = useState(false);
   const [isTTS, setIsTTS] = useState(false);
   const [theme, setTheme] = useState('light');
-  const [sessionId] = useState(() => Math.random().toString(36).substring(7));
+  const [sessionId, setSessionId] = useState(() => Math.random().toString(36).substring(7));
+  const [isReturningUser, setIsReturningUser] = useState(false);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -24,24 +24,24 @@ function Widget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    const endSessionOnUnload = () => {
-      if (messages.length > 0) {
-        const blob = new Blob([JSON.stringify({ session_id: sessionId })], { type: 'application/json' });
-        navigator.sendBeacon('http://localhost:8000/api/v1/chat/end', blob);
-      }
-    };
-    window.addEventListener('beforeunload', endSessionOnUnload);
-    return () => {
-      window.removeEventListener('beforeunload', endSessionOnUnload);
-    };
-  }, [messages.length, sessionId]);
+
 
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      
+      // Inject welcome back message if returning user and no welcome back message exists
+      if (isReturningUser && messages.length > 0 && !messages.some(m => m.isWelcomeBack)) {
+        const welcomeBackMsg = {
+          id: Date.now(),
+          text: `Welcome back! Ready to continue your journey?`,
+          sender: 'bot',
+          isWelcomeBack: true
+        };
+        setMessages(prev => [...prev, welcomeBackMsg]);
+      }
     }
-  }, [messages, isLoading, isOpen]);
+  }, [messages, isLoading, isOpen, isReturningUser]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -161,27 +161,38 @@ function Widget() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    const welcomeMsg = `Jay Jagannath, ${authData.name}! 🙏 How can I help you explore today?`;
     try {
-      await axios.post(`http://localhost:8000/api/v1/auth/login?session_id=${sessionId}`, authData);
+      const response = await axios.post(`http://localhost:8000/api/v1/auth/login?session_id=${sessionId}`, authData);
       setAuthMode('authenticated');
+      
+      const returnedSessionId = response.data.session_id;
+      const history = response.data.history || [];
+      
+      if (returnedSessionId) {
+          setSessionId(returnedSessionId);
+      }
+      
+      if (history.length > 0) {
+          setMessages(history);
+          setIsReturningUser(true);
+      } else {
+          setMessages([{ 
+            id: Date.now(), 
+            text: `Jay Jagannath, ${authData.name}! 🙏 Please type or select your preferred language. / ଦୟାକରି ଆପଣଙ୍କର ପସନ୍ଦର ଭାଷା ବାଛନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ | / कृपया अपनी पसंदीदा भाषा टाइप करें या चुनें।`, 
+            sender: 'bot',
+            suggestions: ["English", "Odia", "Hindi", "Bengali", "Telugu", "Tamil"] 
+          }]);
+      }
     } catch (error) {
       console.error("Login Error:", error);
-      // For demo purposes, we will still let them in even if mock server fails
       setAuthMode('authenticated');
+      if (messages.length === 0) setMessages([{ id: Date.now(), text: welcomeMsg, sender: 'bot' }]);
     }
   };
 
   const handleClose = async () => {
     setIsOpen(false);
-    if (messages.length > 0) {
-      try {
-        await axios.post('http://localhost:8000/api/v1/chat/end', { session_id: sessionId });
-        setMessages([]);
-        setAuthMode('selection');
-      } catch (error) {
-        console.error("Failed to end session:", error);
-      }
-    }
   };
 
   const renderHeader = (showBack = false, backAction = () => {}) => (
@@ -308,10 +319,6 @@ function Widget() {
                 <div className="btn-guest-icon"><span style={{color: 'var(--text-2)', fontSize: '15px'}}>🚶</span></div>
                 Start as Guest
               </button>
-              <div className="social-row">
-                <button className="social-btn"><span className="social-icon">🔵</span> Google</button>
-                <button className="social-btn"><span className="social-icon">📘</span> Facebook</button>
-              </div>
             </div>
 
             <div className="footer-note">
@@ -346,11 +353,6 @@ function Widget() {
                 </button>
               </form>
 
-              <div className="btn-or">or continue with</div>
-              <div className="social-row">
-                <button className="social-btn"><span className="social-icon">🔵</span> Google</button>
-                <button className="social-btn"><span className="social-icon">📘</span> Facebook</button>
-              </div>
             </div>
           </div>
         )}
@@ -377,7 +379,17 @@ function Widget() {
                 </div>
               </div>
 
-              <button className="btn-primary" onClick={() => handleSend(null, "I started exploring Odisha as a guest — show me what I can do.")}>
+              <button className="btn-primary" onClick={() => {
+                setAuthMode('guest-chat');
+                if (messages.length === 0) {
+                  setMessages([{ 
+                    id: Date.now(), 
+                    text: "Namaskara! 🙏 Please type or select your preferred language. / ଦୟାକରି ଆପଣଙ୍କର ପସନ୍ଦର ଭାଷା ବାଛନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ | / कृपया अपनी पसंदीदा भाषा टाइप करें या चुनें।", 
+                    sender: 'bot',
+                    suggestions: ["English", "Odia", "Hindi", "Bengali", "Telugu", "Tamil"]
+                  }]);
+                }
+              }}>
                 <Compass size={17} />
                 Continue as Guest ↗
               </button>

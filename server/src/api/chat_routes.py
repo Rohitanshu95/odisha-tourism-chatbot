@@ -1,8 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from langchain_core.messages import HumanMessage, AIMessage
-
+from langchain_core.messages import HumanMessage, AIMessage, messages_from_dict, messages_to_dict
+from datetime import datetime
 from src.agents.odisha_agent import create_odisha_agent
 
 router = APIRouter()
@@ -45,29 +45,89 @@ async def login_user(user: UserCaptureModel, session_id: str):
     if db is None:
         raise HTTPException(status_code=500, detail="Database not initialized")
     
-    # Save user to DB
-    user_dict = user.model_dump()
-    user_dict["_id"] = str(uuid.uuid4())
-    await db["users"].insert_one(user_dict)
+    # Check if user exists
+    clean_email = user.email.strip()
+    clean_mobile = user.mobile.strip().lstrip('0')
+    existing_user = await db["users"].find_one({"email": clean_email, "mobile": clean_mobile})
     
-    # Update session metadata to authenticated
-    if session_id not in session_metadata:
-        session_metadata[session_id] = {"is_guest": False, "question_count": 0, "user_id": user_dict["_id"]}
+    if existing_user:
+        user_id = existing_user["_id"]
     else:
-        session_metadata[session_id]["is_guest"] = False
-        session_metadata[session_id]["user_id"] = user_dict["_id"]
+        user_dict = user.model_dump()
+        user_id = str(uuid.uuid4())
+        user_dict["_id"] = user_id
+        user_dict["email"] = clean_email
+        user_dict["mobile"] = clean_mobile
+        await db["users"].insert_one(user_dict)
         
-    return {"status": "success", "message": "User authenticated", "user_id": user_dict["_id"]}
+    # Check for recent session within 24 hours
+    twenty_four_hours_ago = datetime.utcnow().timestamp() - 86400
+    # MongoDB stores updated_at as ISODate or datetime object. 
+    # We will search by user_id in meta and updated_at
+    from datetime import timedelta
+    time_limit = datetime.utcnow() - timedelta(hours=24)
+    
+    recent_session = await db["chat_sessions"].find_one({
+        "meta.user_id": user_id,
+        "updated_at": {"$gte": time_limit}
+    }, sort=[("updated_at", -1)])
+    
+    frontend_history = []
+    returned_session_id = session_id
+    
+    if recent_session:
+        returned_session_id = recent_session.get("session_id", session_id)
+        # Parse langchain messages to frontend format
+        langchain_msgs = recent_session.get("messages", [])
+        for idx, msg in enumerate(langchain_msgs):
+            sender = 'user' if msg.get("type") == "human" else 'bot'
+            content = msg.get("data", {}).get("content", "")
+            frontend_history.append({
+                "id": int(datetime.utcnow().timestamp() * 1000) + idx,
+                "text": content,
+                "sender": sender
+            })
+            
+        # Ensure it's in memory for immediate chat continuity
+        chat_histories[returned_session_id] = messages_from_dict(langchain_msgs)
+        session_metadata[returned_session_id] = recent_session.get("meta", {})
+    else:
+        # Update session metadata for new session
+        chat_histories[returned_session_id] = []
+        if returned_session_id not in session_metadata:
+            session_metadata[returned_session_id] = {"is_guest": False, "question_count": 0, "user_id": user_id}
+        else:
+            session_metadata[returned_session_id]["is_guest"] = False
+            session_metadata[returned_session_id]["user_id"] = user_id
+
+    return {
+        "status": "success", 
+        "message": "User authenticated", 
+        "user_id": user_id,
+        "session_id": returned_session_id,
+        "history": frontend_history
+    }
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     if not agent_executor:
         raise HTTPException(status_code=500, detail="Agent not initialized (missing API key?)")
 
+    db = get_db()
+
     if request.session_id not in chat_histories:
-        chat_histories[request.session_id] = []
-        session_metadata[request.session_id] = {"is_guest": True, "question_count": 0}
-        
+        history_loaded = False
+        if db is not None:
+            session_doc = await db["chat_sessions"].find_one({"session_id": request.session_id})
+            if session_doc:
+                chat_histories[request.session_id] = messages_from_dict(session_doc.get("messages", []))
+                session_metadata[request.session_id] = session_doc.get("meta", {"is_guest": True, "question_count": 0})
+                history_loaded = True
+                
+        if not history_loaded:
+            chat_histories[request.session_id] = []
+            session_metadata[request.session_id] = {"is_guest": True, "question_count": 0}
+            
     history = chat_histories[request.session_id]
     meta = session_metadata[request.session_id]
     
@@ -103,6 +163,20 @@ async def chat_endpoint(request: ChatRequest):
         
         if len(history) > 20:
             chat_histories[request.session_id] = history[-20:]
+            history = chat_histories[request.session_id]
+            
+        if db is not None:
+            await db["chat_sessions"].update_one(
+                {"session_id": request.session_id},
+                {
+                    "$set": {
+                        "messages": messages_to_dict(history),
+                        "meta": meta,
+                        "updated_at": datetime.utcnow()
+                    }
+                },
+                upsert=True
+            )
             
         # Log Telemetry asynchronously
         db = get_db()
