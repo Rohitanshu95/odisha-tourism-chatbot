@@ -122,7 +122,8 @@ def fetch_location_images(location: str) -> str:
         "format": "json"
     }
     try:
-        response = requests.get(url, params=params)
+        headers = {'User-Agent': 'OdishaTourismChatbot/1.0'}
+        response = requests.get(url, params=params, headers=headers)
         data = response.json()
         pages = data.get("query", {}).get("pages", {})
         urls = []
@@ -134,8 +135,33 @@ def fetch_location_images(location: str) -> str:
                     urls.append(url)
         
         if urls:
-            return f"Images found for {location}: " + ", ".join(urls)
+            return ", ".join(urls)
     except Exception as e:
         print(f"Image fetch error: {e}")
     
     return f"No images found for {location}."
+
+import json
+
+@tool
+def get_tourism_links(query_type: str, district_name: str = None) -> str:
+    """Gets official tourism links. query_type can be 'district', 'nature', or 'otdc'. If 'district', provide district_name."""
+    try:
+        # Resolve path relative to the project root
+        file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "dist-link.json")
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            
+        if query_type == 'nature':
+            return f"Nature-based tourism link: {data['tourismLinks']['natureBasedTourism']}"
+        elif query_type == 'otdc':
+            return f"Odisha Tourism Development Corporation (OTDC) link: {data['tourismLinks']['tourismDevelopmentCompany']}"
+        elif query_type == 'district' and district_name:
+            for dist in data['districts']:
+                if district_name.lower() in dist['districtName'].lower() or dist['districtName'].lower() in district_name.lower():
+                    return f"Official website for {dist['districtName']} district: {dist['officialWebsiteUrl']}"
+            return f"Could not find an official link for the district '{district_name}'."
+    except Exception as e:
+        return f"Error fetching link: {e}"
+    
+    return "Invalid query."

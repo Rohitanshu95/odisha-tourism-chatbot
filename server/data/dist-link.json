@@ -1,0 +1,129 @@
+{
+  "districts": [
+    {
+      "districtName": "Angul",
+      "officialWebsiteUrl": "https://angul.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Balangir",
+      "officialWebsiteUrl": "https://balangir.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Balasore (Baleswar)",
+      "officialWebsiteUrl": "https://baleswar.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Bargarh",
+      "officialWebsiteUrl": "https://bargarh.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Bhadrak",
+      "officialWebsiteUrl": "https://bhadrak.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Boudh",
+      "officialWebsiteUrl": "https://boudh.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Cuttack",
+      "officialWebsiteUrl": "https://cuttack.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Deogarh",
+      "officialWebsiteUrl": "https://deogarh.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Dhenkanal",
+      "officialWebsiteUrl": "https://dhenkanal.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Gajapati",
+      "officialWebsiteUrl": "https://gajapati.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Ganjam",
+      "officialWebsiteUrl": "https://ganjam.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Jagatsinghpur",
+      "officialWebsiteUrl": "https://jagatsinghpur.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Jajpur",
+      "officialWebsiteUrl": "https://jajpur.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Jharsuguda",
+      "officialWebsiteUrl": "https://jharsuguda.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Kalahandi",
+      "officialWebsiteUrl": "https://kalahandi.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Kandhamal",
+      "officialWebsiteUrl": "https://kandhamal.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Kendrapara",
+      "officialWebsiteUrl": "https://kendrapara.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Keonjhar (Kendujhar)",
+      "officialWebsiteUrl": "https://kendujhar.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Khordha",
+      "officialWebsiteUrl": "https://khordha.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Koraput",
+      "officialWebsiteUrl": "https://koraput.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Malkangiri",
+      "officialWebsiteUrl": "https://malkangiri.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Mayurbhanj",
+      "officialWebsiteUrl": "https://mayurbhanj.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Nabarangpur",
+      "officialWebsiteUrl": "https://nabarangpur.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Nayagarh",
+      "officialWebsiteUrl": "https://nayagarh.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Nuapada",
+      "officialWebsiteUrl": "https://nuapada.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Puri",
+      "officialWebsiteUrl": "https://puri.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Rayagada",
+      "officialWebsiteUrl": "https://rayagada.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Sambalpur",
+      "officialWebsiteUrl": "https://sambalpur.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Subarnapur (Sonepur)",
+      "officialWebsiteUrl": "https://subarnapur.odisha.gov.in/en"
+    },
+    {
+      "districtName": "Sundargarh",
+      "officialWebsiteUrl": "https://sundargarh.odisha.gov.in/en"
+    }
+  ],
+  "tourismLinks": {
+    "mainTourismPortal": "https://odishatourism.gov.in/content/tourism/en.html",
+    "natureBasedTourism": "https://www.ecotourodisha.com/",
+    "tourismDevelopmentCompany": "https://otdc.odisha.gov.in/"
+  }
+}

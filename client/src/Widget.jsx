@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles } from 'lucide-react';
+import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles, User, ArrowLeft, LogIn, Compass, MapPin } from 'lucide-react';
 import './index.css';
 
 function Widget() {
@@ -10,6 +10,7 @@ function Widget() {
   const [isLoading, setIsLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationConsent, setLocationConsent] = useState('pending');
+  // authMode: 'selection', 'login', 'guest', 'authenticated'
   const [authMode, setAuthMode] = useState('selection');
   const [authData, setAuthData] = useState({ name: '', email: '', mobile: '' });
   const [isRecording, setIsRecording] = useState(false);
@@ -42,7 +43,6 @@ function Widget() {
     }
   }, [messages, isLoading, isOpen]);
 
-  // Initialize Speech Recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -56,16 +56,13 @@ function Widget() {
         setInput((prev) => prev + (prev ? ' ' : '') + transcript);
         setIsRecording(false);
       };
-
       recognition.onerror = (event) => {
         console.error("Speech recognition error", event.error);
         setIsRecording(false);
       };
-
       recognition.onend = () => {
         setIsRecording(false);
       };
-
       recognitionRef.current = recognition;
     }
   }, []);
@@ -100,8 +97,11 @@ function Widget() {
   const handleSend = async (e, customText = null) => {
     e?.preventDefault();
     const textToSend = customText || input;
-
     if (!textToSend.trim()) return;
+
+    if (authMode !== 'authenticated' && authMode !== 'guest-chat') {
+        setAuthMode('guest-chat');
+    }
 
     const userMsg = { id: Date.now(), text: textToSend, sender: 'user' };
     setMessages(prev => [...prev, userMsg]);
@@ -139,7 +139,6 @@ function Widget() {
       const botMsg = { id: Date.now() + 1, text: responseText, suggestions, images, sender: 'bot' };
       setMessages(prev => [...prev, botMsg]);
 
-      // TTS Output
       if (isTTS) {
           const cleanText = responseText.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
           const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -147,17 +146,13 @@ function Widget() {
           window.speechSynthesis.speak(utterance);
       }
 
-      if (response.data.requires_login) {
+      if (response.data.requires_login && authMode !== 'authenticated') {
         setAuthMode('login');
       }
     } catch (error) {
       console.error("Chat Error:", error);
       const fallbackText = error.response?.data?.response || "I'm currently experiencing technical difficulties. If you have an urgent query, please reach out to our official support team at support@odishatourism.gov.in";
-      const errorMsg = {
-        id: Date.now() + 1,
-        text: fallbackText,
-        sender: 'bot'
-      };
+      const errorMsg = { id: Date.now() + 1, text: fallbackText, sender: 'bot' };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
@@ -171,6 +166,8 @@ function Widget() {
       setAuthMode('authenticated');
     } catch (error) {
       console.error("Login Error:", error);
+      // For demo purposes, we will still let them in even if mock server fails
+      setAuthMode('authenticated');
     }
   };
 
@@ -178,9 +175,7 @@ function Widget() {
     setIsOpen(false);
     if (messages.length > 0) {
       try {
-        await axios.post('http://localhost:8000/api/v1/chat/end', {
-          session_id: sessionId
-        });
+        await axios.post('http://localhost:8000/api/v1/chat/end', { session_id: sessionId });
         setMessages([]);
         setAuthMode('selection');
       } catch (error) {
@@ -189,180 +184,314 @@ function Widget() {
     }
   };
 
-  return (
-    <div className={`widget-container theme-${theme}`} role="region" aria-label="Chatbot Widget">
-      <div className={`chat-window ${isOpen ? 'open' : 'closed'}`} aria-hidden={!isOpen}>
-        <header className="header">
-          <div className="header-title">
-            <img src="/botimage.png" alt="Logo" className="header-logo" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-            <div>
-              <h1 id="chatbot-title">Odisha Tourism</h1>
-              <p className="header-subtitle">Official AI Assistant</p>
+  const renderHeader = (showBack = false, backAction = () => {}) => (
+    <>
+      <div className="header">
+        <svg className="wheel-bg" width="120" height="120" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="46" stroke="white" strokeWidth="2"/>
+          <circle cx="50" cy="50" r="32" stroke="white" strokeWidth="1.5"/>
+          <circle cx="50" cy="50" r="9" fill="white"/>
+          <line x1="50" y1="4" x2="50" y2="22" stroke="white" strokeWidth="2.5"/>
+          <line x1="50" y1="78" x2="50" y2="96" stroke="white" strokeWidth="2.5"/>
+          <line x1="4" y1="50" x2="22" y2="50" stroke="white" strokeWidth="2.5"/>
+          <line x1="78" y1="50" x2="96" y2="50" stroke="white" strokeWidth="2.5"/>
+          <line x1="15" y1="15" x2="29" y2="29" stroke="white" strokeWidth="2"/>
+          <line x1="71" y1="71" x2="85" y2="85" stroke="white" strokeWidth="2"/>
+          <line x1="85" y1="15" x2="71" y2="29" stroke="white" strokeWidth="2"/>
+          <line x1="29" y1="71" x2="15" y2="85" stroke="white" strokeWidth="2"/>
+          <line x1="50" y1="4" x2="65" y2="13" stroke="white" strokeWidth="1.5"/>
+          <line x1="65" y1="87" x2="50" y2="96" stroke="white" strokeWidth="1.5"/>
+          <line x1="35" y1="87" x2="50" y2="96" stroke="white" strokeWidth="1.5"/>
+          <line x1="4" y1="65" x2="13" y2="50" stroke="white" strokeWidth="1.5"/>
+          <line x1="87" y1="65" x2="96" y2="50" stroke="white" strokeWidth="1.5"/>
+          <line x1="4" y1="35" x2="13" y2="50" stroke="white" strokeWidth="1.5"/>
+        </svg>
+        <div className="header-row">
+          <div className="logo-circle">🏛️</div>
+          <div className="hdr-title">
+            <div className="hdr-name">Odisha Tourism</div>
+            <div className="hdr-sub">Official AI Assistant</div>
+          </div>
+          <div className="hdr-icons">
+            {authMode === 'authenticated' || authMode === 'guest-chat' ? (
+                <>
+                  <div className="hdr-icon" title="Toggle Voice Output" onClick={() => setIsTTS(!isTTS)}>
+                    {isTTS ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  </div>
+                </>
+            ) : null}
+            <div className="hdr-icon" title="Close" onClick={handleClose}>
+              <X size={16} />
             </div>
           </div>
-          <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button className="action-btn" onClick={() => setIsTTS(!isTTS)} title="Toggle Voice Output" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-              {isTTS ? <Volume2 size={20} /> : <VolumeX size={20} />}
-            </button>
-            <button className="action-btn" onClick={() => {
-              setTheme(prev => prev === 'light' ? 'dark' : prev === 'dark' ? 'festive' : 'light');
-            }} title="Toggle Theme" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-              {theme === 'light' ? <Sun size={20} /> : theme === 'dark' ? <Moon size={20} /> : <Sparkles size={20} />}
-            </button>
-            <button className="close-btn" onClick={handleClose} title="End Chat & Close" aria-label="Close Chat" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-          </div>
-        </header>
+        </div>
+      </div>
+      {showBack && (
+        <div className="back-row" onClick={backAction}>
+          <ArrowLeft size={16} /> Back
+        </div>
+      )}
+    </>
+  );
 
-        {locationConsent === 'pending' && (
-          <div className="consent-banner" role="alert">
-            <span>Allow location for better travel routes?</span>
-            <div className="consent-buttons">
-              <button className="consent-allow" onClick={requestLocation} aria-label="Allow Location">Allow</button>
-              <button className="consent-skip" onClick={() => setLocationConsent('denied')} aria-label="Deny Location">Skip</button>
+  return (
+    <div className={`widget-container theme-${theme}`} role="region" aria-label="Chatbot Widget">
+      <div className={`phone ${isOpen ? 'open' : 'closed'}`} aria-hidden={!isOpen}>
+        
+        {authMode === 'selection' && (
+          <div className="screen active">
+            {renderHeader()}
+            
+            {locationConsent === 'pending' && (
+              <div className="loc-bar">
+                <MapPin size={16} color="#412402" />
+                <span className="loc-text">Allow location for better travel routes?</span>
+                <button className="loc-allow" onClick={requestLocation}>Allow</button>
+                <button className="loc-skip" onClick={() => setLocationConsent('denied')}>Skip</button>
+              </div>
+            )}
+
+            <div className="hero-area">
+              <svg className="hero-motif" width="200" height="200" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="48" stroke="#C1440E" strokeWidth="1"/>
+                <circle cx="50" cy="50" r="36" stroke="#C1440E" strokeWidth="0.8"/>
+                <circle cx="50" cy="50" r="24" stroke="#C1440E" strokeWidth="0.8"/>
+                <circle cx="50" cy="50" r="8" fill="#C1440E"/>
+                <line x1="50" y1="2" x2="50" y2="98" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="2" y1="50" x2="98" y2="50" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="15" y1="15" x2="85" y2="85" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="85" y1="15" x2="15" y2="85" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="50" y1="2" x2="74" y2="8" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="50" y1="2" x2="26" y2="8" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="92" y1="26" x2="98" y2="50" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="92" y1="74" x2="98" y2="50" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="8" y1="26" x2="2" y2="50" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="8" y1="74" x2="2" y2="50" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="50" y1="98" x2="74" y2="92" stroke="#C1440E" strokeWidth="0.5"/>
+                <line x1="50" y1="98" x2="26" y2="92" stroke="#C1440E" strokeWidth="0.5"/>
+              </svg>
+              <div className="hero-icon">🙏</div>
+              <div className="hero-title">Welcome to Odisha!</div>
+              <div className="hero-sub">Explore temples, beaches, festivals<br/>and the soul of India's east coast</div>
+              <div className="dots">
+                <div className="dot active"></div>
+                <div className="dot"></div>
+                <div className="dot"></div>
+              </div>
+            </div>
+
+            <div className="features">
+              <div className="feat">
+                <div className="feat-icon">🛕</div>
+                <div className="feat-label">65,000+ temples</div>
+              </div>
+              <div className="feat">
+                <div className="feat-icon">🌊</div>
+                <div className="feat-label">480km coastline</div>
+              </div>
+              <div className="feat">
+                <div className="feat-icon">🎨</div>
+                <div className="feat-label">Ancient crafts</div>
+              </div>
+            </div>
+
+            <div className="divider"></div>
+
+            <div className="auth-area">
+              <div className="auth-label">How would you like to proceed?</div>
+              <button className="btn-primary" onClick={() => setAuthMode('login')}>
+                <div className="btn-primary-icon"><User size={15} /></div>
+                Login / Register
+              </button>
+              <div className="btn-or">or</div>
+              <button className="btn-guest" onClick={() => setAuthMode('guest')}>
+                <div className="btn-guest-icon"><span style={{color: 'var(--text-2)', fontSize: '15px'}}>🚶</span></div>
+                Start as Guest
+              </button>
+              <div className="social-row">
+                <button className="social-btn"><span className="social-icon">🔵</span> Google</button>
+                <button className="social-btn"><span className="social-icon">📘</span> Facebook</button>
+              </div>
+            </div>
+
+            <div className="footer-note">
+              By continuing you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a>
             </div>
           </div>
         )}
 
-        <div className="chat-area" aria-live="polite">
-          {authMode === 'selection' ? (
-            <div className="auth-selection-screen">
-              <h2>Welcome to Odisha!</h2>
-              <p>How would you like to proceed?</p>
-              <div className="auth-buttons">
-                <button className="btn-primary" onClick={() => setAuthMode('login')}>Login / Register</button>
-                <button className="btn-secondary" onClick={() => setAuthMode('guest')}>Start as Guest</button>
-              </div>
-            </div>
-          ) : authMode === 'login' ? (
-            <div className="login-screen">
-              <h2>User Details</h2>
-              <p>Please provide your details to continue.</p>
-              <form onSubmit={handleLoginSubmit} className="login-form">
-                <input type="text" placeholder="Full Name" required value={authData.name} onChange={e => setAuthData({ ...authData, name: e.target.value })} />
-                <input type="email" placeholder="Email Address" required value={authData.email} onChange={e => setAuthData({ ...authData, email: e.target.value })} />
-                <input type="tel" placeholder="Mobile Number" required value={authData.mobile} onChange={e => setAuthData({ ...authData, mobile: e.target.value })} />
-                <button type="submit" className="btn-primary">Submit</button>
+        {authMode === 'login' && (
+          <div className="screen active">
+            {renderHeader(true, () => setAuthMode('selection'))}
+            <div className="form-area">
+              <div className="form-title">Join us today 🌅</div>
+              <div className="form-sub">Provide your details to get full access to Odisha Mitra.</div>
+              
+              <form onSubmit={handleLoginSubmit} style={{display: 'flex', flexDirection: 'column', gap: '14px'}}>
+                <div className="field-wrap">
+                  <div className="field-label">Full Name</div>
+                  <input className="field-input" type="text" placeholder="e.g. Rahul Sharma" value={authData.name} onChange={e => setAuthData({...authData, name: e.target.value})} required minLength={2} />
+                </div>
+                <div className="field-wrap">
+                  <div className="field-label">Email Address</div>
+                  <input className="field-input" type="email" placeholder="you@example.com" value={authData.email} onChange={e => setAuthData({...authData, email: e.target.value})} required />
+                </div>
+                <div className="field-wrap">
+                  <div className="field-label">Mobile Number</div>
+                  <input className="field-input" type="tel" placeholder="e.g. 9876543210" value={authData.mobile} onChange={e => setAuthData({...authData, mobile: e.target.value})} required minLength={10} />
+                </div>
+                <button type="submit" className="btn-primary" style={{marginTop: '4px'}}>
+                  <LogIn size={17} />
+                  Continue
+                </button>
               </form>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="welcome-screen">
-              <h2>
-                {authMode === 'authenticated' && authData.name
-                  ? `Namaskara, ${authData.name}!`
-                  : 'Namaskara, Explorer!'}
-              </h2>
-              <p>
-                {authMode === 'authenticated'
-                  ? 'Ready to discover the hidden gems of Odisha today?'
-                  : 'Jay Jagannath! 🙏 Welcome to Odisha Tourism. Atithi Devo Bhava. How can I help you plan your trip?'}
-              </p>
 
-              <div className="features-grid">
-                <button className="feature-card" onClick={() => handleSend(null, "I would like to plan a trip.")}>
-                  <Map className="feature-icon" size={20} />
-                  <span>Plan a Trip</span>
-                </button>
-                <button className="feature-card" onClick={() => handleSend(null, "What is the weather like?")}>
-                  <Sun className="feature-icon" size={20} />
-                  <span>Check Weather</span>
-                </button>
-                <button className="feature-card" onClick={() => handleSend(null, "Tell me about local food.")}>
-                  <Utensils className="feature-icon" size={20} />
-                  <span>Local Cuisine</span>
-                </button>
-                <button className="feature-card" onClick={() => handleSend(null, "Show me heritage sites.")}>
-                  <Info className="feature-icon" size={20} />
-                  <span>Heritage Info</span>
-                </button>
+              <div className="btn-or">or continue with</div>
+              <div className="social-row">
+                <button className="social-btn"><span className="social-icon">🔵</span> Google</button>
+                <button className="social-btn"><span className="social-icon">📘</span> Facebook</button>
               </div>
             </div>
-          ) : (
-            <>
-              {messages.map((msg) => (
-                <div key={msg.id} className={`message-wrapper ${msg.sender}`}>
-                  <div className="message">
-                    {msg.text.split('\n').map((line, i) => {
-                      let htmlLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                      htmlLine = htmlLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-                      return <p key={i} dangerouslySetInnerHTML={{ __html: htmlLine }} />;
-                    })}
-                  </div>
-                  <span className="message-time">
-                    {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  {msg.images && msg.images.length > 0 && (
-                    <div className="image-carousel" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '8px', paddingBottom: '4px' }}>
-                      {msg.images.map((imgUrl, idx) => (
-                        <img key={idx} src={imgUrl} alt="Location" style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
-                      ))}
-                    </div>
-                  )}
-                  {msg.suggestions && msg.suggestions.length > 0 && (
-                    <div className="suggestion-chips">
-                      {msg.suggestions.map((suggestion, idx) => (
-                        <button key={idx} className="suggestion-chip" onClick={() => handleSend(null, suggestion)}>
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+          </div>
+        )}
 
-              {isLoading && (
-                <div className="typing-indicator" aria-label="Bot is typing">
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
+        {authMode === 'guest' && (
+          <div className="screen active">
+            {renderHeader(true, () => setAuthMode('selection'))}
+            <div className="form-area">
+              <div className="form-title">Explore as Guest 🌅</div>
+              <div className="form-sub">No sign-up needed — start discovering Odisha right away</div>
+              
+              <div className="guest-perks">
+                <div className="perk-row">
+                  <div className="perk-icon">🗺️</div>
+                  <div className="perk-text"><b>Browse all destinations</b> — temples, beaches, forests & more</div>
                 </div>
-              )}
-              <div ref={messagesEndRef} tabIndex="-1" />
-            </>
-          )}
-        </div>
-
-        {(authMode !== 'selection' && authMode !== 'login') && (
-          <form className="input-area" onSubmit={handleSend}>
-            <div className="input-row">
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  className="chat-input"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything..."
-                  disabled={isLoading}
-                  aria-label="Chat input field"
-                />
-                {recognitionRef.current && (
-                  <button
-                    type="button"
-                    className={`action-button ${isRecording ? 'recording' : ''}`}
-                    onClick={toggleRecording}
-                    aria-label={isRecording ? "Stop recording" : "Start voice input"}
-                    title="Voice Input"
-                  >
-                    {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-                  </button>
-                )}
+                <div className="perk-row">
+                  <div className="perk-icon">🤖</div>
+                  <div className="perk-text"><b>Chat with Odisha Mitra</b> — AI guide answers your questions</div>
+                </div>
+                <div className="perk-row">
+                  <div className="perk-icon">🔒</div>
+                  <div className="perk-text"><b>Limited features</b> — bookmarks & trip planning need an account</div>
+                </div>
               </div>
-              <button type="submit" className="send-button" disabled={!input.trim() || isLoading} aria-label="Send message">
-                <Send size={18} />
+
+              <button className="btn-primary" onClick={() => handleSend(null, "I started exploring Odisha as a guest — show me what I can do.")}>
+                <Compass size={17} />
+                Continue as Guest ↗
               </button>
+
+              <div className="switch-auth">
+                Want full access? <span onClick={() => setAuthMode('login')}>Create an account</span>
+              </div>
             </div>
-          </form>
+          </div>
+        )}
+
+        {(authMode === 'authenticated' || authMode === 'guest-chat') && (
+          <div className="screen active" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+            {renderHeader()}
+            <div className="chat-area" aria-live="polite">
+              {messages.length === 0 ? (
+                <div style={{textAlign: 'center', marginTop: '20px'}}>
+                    <div style={{fontSize: '40px', marginBottom: '10px'}}>👋</div>
+                    <h2 style={{fontFamily: 'Outfit', color: 'var(--terra-dk)', marginBottom: '8px'}}>Namaskara!</h2>
+                    <p style={{color: 'var(--text-2)', fontSize: '14px', marginBottom: '24px'}}>
+                      {authMode === 'authenticated' && authData.email 
+                        ? 'Ready to discover the hidden gems of Odisha today?'
+                        : 'How can I help you plan your trip?'}
+                    </p>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                        <button className="suggestion-chip" onClick={() => handleSend(null, "Plan a 3-day trip to Puri")}>🗺️ Plan a 3-day trip to Puri</button>
+                        <button className="suggestion-chip" onClick={() => handleSend(null, "What are the best local dishes to try?")}>🍛 What are the best local dishes to try?</button>
+                        <button className="suggestion-chip" onClick={() => handleSend(null, "Tell me about Konark Sun Temple")}>🛕 Tell me about Konark Sun Temple</button>
+                    </div>
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`message-wrapper ${msg.sender}`}>
+                      <div className="message">
+                        {msg.text.split('\n').map((line, i) => {
+                          let htmlLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                          htmlLine = htmlLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                          return <p key={i} dangerouslySetInnerHTML={{ __html: htmlLine }} />;
+                        })}
+                      </div>
+                      <span className="message-time">
+                        {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {msg.images && msg.images.length > 0 && (
+                        <div className="image-carousel" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '8px', paddingBottom: '4px' }}>
+                          {msg.images.map((imgUrl, idx) => (
+                            <img key={idx} src={imgUrl} alt="Location" style={{ height: '120px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                          ))}
+                        </div>
+                      )}
+                      {msg.suggestions && msg.suggestions.length > 0 && (
+                        <div className="suggestion-chips">
+                          {msg.suggestions.map((suggestion, idx) => (
+                            <button key={idx} className="suggestion-chip" onClick={() => handleSend(null, suggestion)}>
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="typing-indicator" aria-label="Bot is typing">
+                      <div className="dot"></div>
+                      <div className="dot"></div>
+                      <div className="dot"></div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} tabIndex="-1" />
+                </>
+              )}
+            </div>
+
+            <form className="input-area" onSubmit={handleSend}>
+              <div className="input-row">
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    className="chat-input"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask me anything..."
+                    disabled={isLoading}
+                    aria-label="Chat input field"
+                  />
+                  {recognitionRef.current && (
+                    <button
+                      type="button"
+                      className={`action-button ${isRecording ? 'recording' : ''}`}
+                      onClick={toggleRecording}
+                      aria-label={isRecording ? "Stop recording" : "Start voice input"}
+                      title="Voice Input"
+                    >
+                      {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+                    </button>
+                  )}
+                </div>
+                <button type="submit" className="send-button" disabled={!input.trim() || isLoading} aria-label="Send message">
+                  <Send size={16} />
+                </button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
 
       {!isOpen && (
         <button
-          className="widget-toggle custom-logo-toggle"
+          className="widget-toggle"
           onClick={() => setIsOpen(true)}
           aria-label="Open Chatbot"
         >
-          <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" />
+          <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover', padding: '2px'}}/>
         </button>
       )}
     </div>

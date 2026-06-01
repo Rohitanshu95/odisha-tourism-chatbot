@@ -200,7 +200,7 @@ function Admin() {
             </thead>
             <tbody>
               {data.recent_failures.map((f, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                <tr key={idx} style={{ borderBottom: '1px solid #081e48ff' }}>
                   <td style={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
                     {new Date(f.timestamp).toLocaleString()}
                   </td>
