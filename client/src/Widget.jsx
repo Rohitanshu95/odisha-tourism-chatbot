@@ -235,7 +235,7 @@ function Widget() {
           <line x1="4" y1="35" x2="13" y2="50" stroke="white" strokeWidth="1.5"/>
         </svg>
         <div className="header-row">
-          <div className="logo-circle">🏛️</div>
+          <img src="/tourism.png" alt="Tourism Logo" className="logo-circle" style={{ padding: 0, objectFit: 'cover', transform: 'scale(1.2)' }} />
           <div className="hdr-title">
             <div className="hdr-name">Odisha Tourism</div>
             <div className="hdr-sub">Official AI Assistant</div>
@@ -539,7 +539,7 @@ function Widget() {
             aria-label="Open Chatbot"
             style={{ position: 'relative', background: 'transparent', boxShadow: 'none' }}
           >
-            <img src="/bot.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', objectFit: 'cover', background: 'transparent'}}/>
+            <img src="/tourism.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', objectFit: 'cover', background: 'transparent', transform: 'scale(1.2)'}}/>
             <div className="notification-dot" style={{position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', backgroundColor: '#F0B800', borderRadius: '50%', border: '3px solid #834026'}}></div>
           </button>
         </>
