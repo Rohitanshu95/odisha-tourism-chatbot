@@ -223,7 +223,37 @@ async def end_session(request: EndSessionRequest):
     meta = session_metadata.get(session_id, {})
     history = chat_histories.get(session_id, [])
     
-    # Database saving of chat has been intentionally removed per Phase 2 requirements (Zero persistence).
+    db = get_db()
+    if history and db is not None:
+        try:
+            transcript_lines = []
+            conversation_data = []
+            for msg in history:
+                role = "User" if msg.type == "human" else "Assistant"
+                transcript_lines.append(f"{role}: {msg.content}")
+                conversation_data.append({"role": role, "content": msg.content})
+            
+            transcript = "\n".join(transcript_lines)
+            
+            from src.llm.client import get_llm
+            from langchain_core.messages import HumanMessage
+            from datetime import datetime
+            
+            llm = get_llm(temperature=0.0)
+            prompt = f"Summarize the following conversation in 1-2 concise sentences, focusing on the user's intent and the outcome.\n\n{transcript}"
+            ai_msg = await llm.ainvoke([HumanMessage(content=prompt)])
+            summary_text = ai_msg.content
+            
+            summary_doc = {
+                "user_id": meta.get("user_id", "guest"),
+                "session_id": session_id,
+                "summary": summary_text,
+                "conversation": conversation_data,
+                "created_at": datetime.utcnow()
+            }
+            await db["chat_summaries"].insert_one(summary_doc)
+        except Exception as e:
+            logger.error(f"Failed to generate summary on chat end: {e}")
                 
     # Clean up ephemeral memory
     if session_id in chat_histories:

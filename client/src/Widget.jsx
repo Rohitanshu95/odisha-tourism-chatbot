@@ -209,6 +209,21 @@ function Widget() {
   };
 
   const handleClose = async () => {
+    // End session on backend if there are messages
+    if ((authMode === 'authenticated' || authMode === 'guest-chat') && messages.length > 0) {
+        try {
+            await axios.post('http://localhost:8000/api/v1/chat/end', {
+                session_id: sessionId
+            });
+        } catch (error) {
+            console.error("Error ending session:", error);
+        }
+        // Reset local state for the next time it's opened
+        setMessages([]);
+        setSessionId(Math.random().toString(36).substring(7));
+        setAuthMode('selection');
+        setPendingQuery(null);
+    }
     setIsOpen(false);
   };
 
@@ -379,6 +394,10 @@ function Widget() {
               </form>
 
             </div>
+            
+            <div className="footer-note" style={{ padding: 0, marginTop: 'auto' }}>
+              <img src="/register.png" alt="Register Footer" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
+            </div>
           </div>
         )}
 
@@ -422,6 +441,10 @@ function Widget() {
               <div className="switch-auth">
                 Want full access? <span onClick={() => setAuthMode('login')}>Create an account</span>
               </div>
+            </div>
+            
+            <div className="footer-note" style={{ padding: 0, marginTop: 'auto' }}>
+              <img src="/guest-removebg-preview.png" alt="Guest Footer" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
             </div>
           </div>
         )}

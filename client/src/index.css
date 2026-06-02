@@ -157,8 +157,8 @@ h1, h2, h3, .serif-text {
 
 /* Phone Container (Replaces old chat-window) */
 .phone {
-  width: 480px;
-  height: 720px;
+  width: 550px;
+  height: 850px;
   max-height: calc(100vh - 40px);
   background: var(--cream);
   border-radius: 24px;
@@ -292,7 +292,7 @@ h1, h2, h3, .serif-text {
 /* Hero Area */
 .hero-area {
   background: var(--cream);
-  padding: 32px 24px 20px;
+  padding: 80px 24px 50px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -300,7 +300,7 @@ h1, h2, h3, .serif-text {
 .hero-motif {
   position: absolute;
   left: 50%;
-  top: 14px;
+  top: 40px;
   transform: translateX(-50%);
   opacity: 0.055;
   pointer-events: none;
@@ -389,10 +389,11 @@ h1, h2, h3, .serif-text {
   margin: 0 24px;
 }
 .auth-area {
-  padding: 24px 24px 28px;
+  padding: 32px 24px 36px;
   display: flex;
   flex-direction: column;
   gap: 0;
+  margin-bottom: 20px;
 }
 .auth-label {
   font-size: 11.5px;
@@ -548,22 +549,22 @@ h1, h2, h3, .serif-text {
 }
 
 .form-area {
-  padding: 20px 24px 28px;
+  padding: 30px 32px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 .form-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--terra-dk);
   margin-bottom: 4px;
 }
 .form-sub {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-2);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 .field-label {
   font-size: 12px;
@@ -615,12 +616,12 @@ h1, h2, h3, .serif-text {
 
 .guest-perks {
   background: var(--warm);
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--border);
-  padding: 14px 16px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
 }
 .perk-row {
   display: flex;
@@ -641,9 +642,9 @@ h1, h2, h3, .serif-text {
   margin-top: 1px;
 }
 .perk-text {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-2);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 .perk-text b {
   color: var(--text);
@@ -741,8 +742,10 @@ h1, h2, h3, .serif-text {
 .message {
   padding: 12px 16px;
   border-radius: 16px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-family: 'Inter', sans-serif;
   word-wrap: break-word;
   color: var(--text);
 }

@@ -36,7 +36,7 @@ function Admin() {
       setError(null);
       let queryParam = selectedDate ? `&start_date=${selectedDate}&end_date=${selectedDate}` : '';
       const analyticsRes = await axios.get(`http://localhost:8000/api/v1/admin/analytics?t=${new Date().getTime()}${queryParam}`);
-      const summariesRes = await axios.get(`http://localhost:8000/api/v1/admin/summaries?t=${new Date().getTime()}`);
+      const summariesRes = await axios.get(`http://localhost:8000/api/v1/admin/summaries?t=${new Date().getTime()}${queryParam}`);
 
       setData(analyticsRes.data);
       setSummaries(summariesRes.data.summaries);
@@ -245,7 +245,7 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {summaries.map((user, idx) => (
+                  {Array.from(new Map(summaries.filter(s => s.user_email && s.user_email !== "Guest").map(user => [user.user_email, user])).values()).map((user, idx) => (
                     <tr key={idx}>
                       <td style={{ fontWeight: 600 }}>{user.user_name}</td>
                       <td>{user.user_email}</td>
@@ -253,8 +253,8 @@ function Admin() {
                       <td style={{ color: 'var(--admin-text-muted)' }}>{new Date(user.created_at).toLocaleString()}</td>
                     </tr>
                   ))}
-                  {summaries.length === 0 && (
-                    <tr><td colSpan="4" style={{ textAlign: 'center', color: '#888' }}>NO USERS REGISTERED</td></tr>
+                  {summaries.filter(s => s.user_email && s.user_email !== "Guest").length === 0 && (
+                    <tr><td colSpan="4" style={{ textAlign: 'center', color: '#888' }}>NO USERS REGISTERED ON THIS DATE</td></tr>
                   )}
                 </tbody>
               </table>

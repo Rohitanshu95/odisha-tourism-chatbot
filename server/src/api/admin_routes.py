@@ -5,33 +5,45 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+from datetime import datetime, timedelta
+
 @router.get("/summaries")
-async def get_all_summaries(response: Response):
+async def get_all_summaries(response: Response, start_date: str = None, end_date: str = None):
     """Fetch all users and their chat summaries for the admin dashboard."""
     try:
         db = get_db()
         
-        # Fetch all users
+        date_filter = {}
+        if start_date:
+            try:
+                date_filter["$gte"] = datetime.strptime(start_date, "%Y-%m-%d")
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+                date_filter["$lt"] = end_dt
+            except ValueError:
+                pass
+                
+        # Fetch all users for lookup
         users_cursor = db.users.find()
-        users = await users_cursor.to_list(length=1000)
-        
-        # Fetch all summaries
-        summaries_cursor = db.chat_summaries.find()
-        summaries = await summaries_cursor.to_list(length=1000)
-        
-        # Combine data
-        # We'll return a list of summaries with user details attached
-        enriched_summaries = []
-        
-        # Create a lookup dictionary for users by _id
+        users = await users_cursor.to_list(length=10000)
         user_dict = {str(user["_id"]): user for user in users}
         
+        # Filter summaries by date
+        summary_match_query = {}
+        if date_filter:
+            summary_match_query = {"created_at": date_filter}
+            
+        summaries_cursor = db.chat_summaries.find(summary_match_query)
+        summaries = await summaries_cursor.to_list(length=10000)
+        
+        enriched_summaries = []
         seen_user_ids = set()
         
         for summary in summaries:
-            # MongoDB _id is not JSON serializable by default without transformation, so we convert it to string
             summary["_id"] = str(summary["_id"])
-            
             user_id_str = str(summary.get("user_id"))
             user_info = user_dict.get(user_id_str)
             if user_info:
@@ -46,16 +58,22 @@ async def get_all_summaries(response: Response):
                 
             enriched_summaries.append(summary)
             
-        # Add registered users who have no chat summaries
-        from datetime import datetime
+        # Add registered users who have no chat summaries but registered on the filtered date
         for user_id_str, user_info in user_dict.items():
             if user_id_str not in seen_user_ids:
+                user_created_at = user_info.get("created_at")
+                
+                # If a date filter is active, only include users who registered on that date
+                if date_filter and user_created_at:
+                    if not (date_filter.get("$gte") <= user_created_at < date_filter.get("$lt")):
+                        continue
+                        
                 enriched_summaries.append({
                     "_id": f"user_{user_id_str}",
                     "user_id": user_id_str,
                     "session_id": "N/A",
                     "summary": "User registered but has no completed chat sessions yet.",
-                    "created_at": user_info.get("created_at", datetime.utcnow()),
+                    "created_at": user_created_at,
                     "user_name": user_info.get("name", "Unknown"),
                     "user_email": user_info.get("email", "Unknown"),
                     "user_mobile": user_info.get("mobile", "Unknown")
