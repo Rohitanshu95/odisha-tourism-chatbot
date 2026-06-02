@@ -650,6 +650,58 @@ h1, h2, h3, .serif-text {
   font-weight: 500;
 }
 
+/* Top Quick Replies */
+.top-quick-replies {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.top-quick-replies::-webkit-scrollbar {
+  display: none;
+}
+.tqr-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.tqr-pill:hover {
+  background: var(--terra-lt);
+  border-color: var(--terra-mid);
+  color: var(--terra-dk);
+}
+.tqr-pill.highlight {
+  background: #FF8C00;
+  border-color: #FF8C00;
+  color: white;
+}
+.tqr-pill.highlight:hover {
+  background: #E67E00;
+  border-color: #E67E00;
+}
+.tqr-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+.tqr-pill.highlight .tqr-icon {
+  opacity: 1;
+}
+
 /* Chat Area Integration */
 .chat-area {
   flex: 1;

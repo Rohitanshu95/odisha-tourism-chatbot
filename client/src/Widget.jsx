@@ -3,6 +3,13 @@ import axios from 'axios';
 import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles, User, ArrowLeft, LogIn, Compass, MapPin } from 'lucide-react';
 import './index.css';
 
+const TOP_QUICK_REPLIES = [
+  { label: 'Sacred Odisha', icon: '🚶‍♂️', type: 'normal' },
+  { label: 'Wildlife Sanctuaries Of Odisha', icon: '🍃', type: 'normal' },
+  { label: 'Beaches & Coastal', icon: '🌊', type: 'normal' },
+  { label: 'Waterfalls & Scenic Landscapes', icon: '🌊', type: 'normal' },
+];
+
 function Widget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -17,6 +24,7 @@ function Widget() {
   const [theme, setTheme] = useState('light');
   const [sessionId, setSessionId] = useState(() => Math.random().toString(36).substring(7));
   const [isReturningUser, setIsReturningUser] = useState(false);
+  const [pendingQuery, setPendingQuery] = useState(null);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -147,6 +155,7 @@ function Widget() {
       }
 
       if (response.data.requires_login && authMode !== 'authenticated') {
+        setPendingQuery(textToSend);
         setAuthMode('login');
       }
     } catch (error) {
@@ -181,8 +190,16 @@ function Widget() {
             id: Date.now(), 
             text: `Jay Jagannath, ${authData.name}! 🙏 Please type or select your preferred language. / ଦୟାକରି ଆପଣଙ୍କର ପସନ୍ଦର ଭାଷା ବାଛନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ | / कृपया अपनी पसंदीदा भाषा टाइप करें या चुनें।`, 
             sender: 'bot',
-            suggestions: ["English", "Odia", "Hindi", "Bengali", "Telugu", "Tamil"] 
+            suggestions: ["English", "ଓଡ଼ିଆ", "हिन्दी", "বাংলা", "తెలుగు", "தமிழ்"] 
           }]);
+      }
+      
+      // Auto-send the pending query if it exists
+      if (pendingQuery) {
+          setTimeout(() => {
+              handleSend(null, pendingQuery);
+          }, 500); // slight delay to allow UI to settle
+          setPendingQuery(null);
       }
     } catch (error) {
       console.error("Login Error:", error);
@@ -386,7 +403,7 @@ function Widget() {
                     id: Date.now(), 
                     text: "Namaskara! 🙏 Please type or select your preferred language. / ଦୟାକରି ଆପଣଙ୍କର ପସନ୍ଦର ଭାଷା ବାଛନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ | / कृपया अपनी पसंदीदा भाषा टाइप करें या चुनें।", 
                     sender: 'bot',
-                    suggestions: ["English", "Odia", "Hindi", "Bengali", "Telugu", "Tamil"]
+                    suggestions: ["English", "ଓଡ଼ିଆ", "हिन्दी", "বাংলা", "తెలుగు", "தமிழ்"]
                   }]);
                 }
               }}>
@@ -403,7 +420,8 @@ function Widget() {
 
         {(authMode === 'authenticated' || authMode === 'guest-chat') && (
           <div className="screen active" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-            {renderHeader()}
+            {renderHeader(true, () => setAuthMode('selection'))}
+
             <div className="chat-area" aria-live="polite">
               {messages.length === 0 ? (
                 <div style={{textAlign: 'center', marginTop: '20px'}}>
@@ -464,6 +482,19 @@ function Widget() {
               )}
             </div>
 
+            <div className="top-quick-replies" style={{ borderBottom: 'none', padding: '10px 14px', background: 'transparent' }}>
+              {TOP_QUICK_REPLIES.map((qr, idx) => (
+                <button 
+                  key={idx} 
+                  className={`tqr-pill ${qr.type === 'highlight' ? 'highlight' : ''}`}
+                  onClick={() => handleSend(null, qr.label)}
+                >
+                  <span className="tqr-icon">{qr.icon}</span>
+                  {qr.label}
+                </button>
+              ))}
+            </div>
+
             <form className="input-area" onSubmit={handleSend}>
               <div className="input-row">
                 <div className="input-wrapper">
@@ -500,15 +531,15 @@ function Widget() {
       {!isOpen && (
         <>
           <div className="widget-tooltip" onClick={() => setIsOpen(true)}>
-            <strong>Namaste!</strong> How can I help?
+            <strong>Jay Jagannath </strong>
           </div>
           <button
             className="widget-toggle"
             onClick={() => setIsOpen(true)}
             aria-label="Open Chatbot"
-            style={{ position: 'relative' }}
+            style={{ position: 'relative', background: 'transparent', boxShadow: 'none' }}
           >
-            <img src="/botimage.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', border: '6px solid #834026', objectFit: 'cover'}}/>
+            <img src="/bot.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', objectFit: 'cover', background: 'transparent'}}/>
             <div className="notification-dot" style={{position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', backgroundColor: '#F0B800', borderRadius: '50%', border: '3px solid #834026'}}></div>
           </button>
         </>

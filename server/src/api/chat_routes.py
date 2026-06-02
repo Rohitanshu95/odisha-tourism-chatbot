@@ -134,6 +134,10 @@ async def chat_endpoint(request: ChatRequest):
     requires_login = False
     if meta["is_guest"] and meta["question_count"] >= 5:
         requires_login = True
+        return ChatResponse(
+            response="You have reached the guest limit of 5 queries. Please log in to continue your journey.",
+            requires_login=True
+        )
     
     meta["question_count"] += 1
 
