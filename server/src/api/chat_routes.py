@@ -58,6 +58,7 @@ async def login_user(user: UserCaptureModel, session_id: str):
         user_dict["_id"] = user_id
         user_dict["email"] = clean_email
         user_dict["mobile"] = clean_mobile
+        user_dict["created_at"] = datetime.utcnow()
         await db["users"].insert_one(user_dict)
         
     # Check for recent session within 24 hours
