@@ -298,48 +298,56 @@ function Widget() {
                 <line x1="50" y1="98" x2="74" y2="92" stroke="#C1440E" strokeWidth="0.5"/>
                 <line x1="50" y1="98" x2="26" y2="92" stroke="#C1440E" strokeWidth="0.5"/>
               </svg>
-              <div className="hero-icon">🙏</div>
-              <div className="hero-title">Welcome to Odisha!</div>
-              <div className="hero-sub">Explore temples, beaches, festivals<br/>and the soul of India's east coast</div>
-              <div className="dots">
-                <div className="dot active"></div>
-                <div className="dot"></div>
-                <div className="dot"></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                <svg width="40" height="10" viewBox="0 0 40 10" fill="var(--terra-dk)">
+                  <polygon points="20,0 25,5 20,10 15,5" />
+                </svg>
+              </div>
+              <div className="hero-title" style={{ fontFamily: '"Georgia", "Playfair Display", serif', fontSize: '32px', color: '#5C2C16' }}>Welcome to Odisha!</div>
+              <div className="hero-sub" style={{ fontSize: '15px', color: '#664E3F', marginTop: '12px', fontWeight: '500' }}>Explore temples, beaches, festivals<br/>and the soul of India's east coast</div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px', marginBottom: '10px' }}>
+                <svg width="220" height="15" viewBox="0 0 220 15" fill="var(--terra-dk)">
+                  <line x1="0" y1="7.5" x2="85" y2="7.5" stroke="var(--terra-dk)" strokeWidth="1" />
+                  <circle cx="92" cy="7.5" r="2" />
+                  <circle cx="100" cy="7.5" r="2.5" />
+                  <polygon points="110,1 116,7.5 110,14 104,7.5" />
+                  <circle cx="120" cy="7.5" r="2.5" />
+                  <circle cx="128" cy="7.5" r="2" />
+                  <line x1="135" y1="7.5" x2="220" y2="7.5" stroke="var(--terra-dk)" strokeWidth="1" />
+                </svg>
               </div>
             </div>
 
-            <div className="features">
-              <div className="feat">
-                <div className="feat-icon">🛕</div>
-                <div className="feat-label">65,000+ temples</div>
-              </div>
-              <div className="feat">
-                <div className="feat-icon">🌊</div>
-                <div className="feat-label">480km coastline</div>
-              </div>
-              <div className="feat">
-                <div className="feat-icon">🎨</div>
-                <div className="feat-label">Ancient crafts</div>
+
+            <div className="auth-area" style={{ position: 'relative', overflow: 'hidden', borderRadius: '20px', margin: '0 16px' }}>
+              <div style={{
+                position: 'absolute',
+                top: '-10px', left: '-10px', right: '-10px', bottom: '-10px',
+                backgroundImage: 'url(/background.webp)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(3px)',
+                opacity: 0.6,
+                zIndex: 0
+              }}></div>
+              
+              <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', padding: '10px 8px' }}>
+                <div className="auth-label" style={{ color: '#5C2C16', fontWeight: '700' }}>How would you like to proceed?</div>
+                <button className="btn-primary" onClick={() => setAuthMode('login')} style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                  <div className="btn-primary-icon"><User size={15} /></div>
+                  Login / Register
+                </button>
+                <div className="btn-or" style={{ color: '#5C2C16', fontWeight: '600' }}>or</div>
+                <button className="btn-guest" onClick={() => setAuthMode('guest')} style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(5px)' }}>
+                  <div className="btn-guest-icon"><span style={{color: 'var(--text-2)', fontSize: '15px'}}>🚶</span></div>
+                  Start as Guest
+                </button>
               </div>
             </div>
 
-            <div className="divider"></div>
-
-            <div className="auth-area">
-              <div className="auth-label">How would you like to proceed?</div>
-              <button className="btn-primary" onClick={() => setAuthMode('login')}>
-                <div className="btn-primary-icon"><User size={15} /></div>
-                Login / Register
-              </button>
-              <div className="btn-or">or</div>
-              <button className="btn-guest" onClick={() => setAuthMode('guest')}>
-                <div className="btn-guest-icon"><span style={{color: 'var(--text-2)', fontSize: '15px'}}>🚶</span></div>
-                Start as Guest
-              </button>
-            </div>
-
-            <div className="footer-note">
-              By continuing you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a>
+            <div className="footer-note" style={{ padding: 0, marginTop: 'auto', opacity: 0.85, filter: 'blur(0.5px)' }}>
+              <img src="/footer.png" alt="Footer" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
             </div>
           </div>
         )}
@@ -419,8 +427,20 @@ function Widget() {
         )}
 
         {(authMode === 'authenticated' || authMode === 'guest-chat') && (
-          <div className="screen active" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-            {renderHeader(true, () => setAuthMode('selection'))}
+          <div className="screen active" style={{flex: 1, display: 'flex', flexDirection: 'column', position: 'relative'}}>
+            <div style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              backgroundImage: 'url(/chat-background.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(4px)',
+              opacity: 0.35,
+              zIndex: 0,
+              pointerEvents: 'none'
+            }}></div>
+            <div style={{position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1, height: '100%'}}>
+              {renderHeader(true, () => setAuthMode('selection'))}
 
             <div className="chat-area" aria-live="polite">
               {messages.length === 0 ? (
@@ -524,6 +544,7 @@ function Widget() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         )}
       </div>
@@ -539,7 +560,7 @@ function Widget() {
             aria-label="Open Chatbot"
             style={{ position: 'relative', background: 'transparent', boxShadow: 'none' }}
           >
-            <img src="/tourism.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', objectFit: 'cover', background: 'transparent', transform: 'scale(1.2)'}}/>
+            <img src="/new.png" alt="Odisha Tourism" className="toggle-logo" style={{width: '85px', height: '85px', borderRadius: '50%', objectFit: 'cover', background: 'transparent', transform: 'scale(1.2)'}}/>
             <div className="notification-dot" style={{position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', backgroundColor: '#F0B800', borderRadius: '50%', border: '3px solid #834026'}}></div>
           </button>
         </>
