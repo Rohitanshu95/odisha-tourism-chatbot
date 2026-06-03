@@ -20,6 +20,10 @@ class UserCaptureModel(BaseModel):
 class UserInDB(UserCaptureModel):
     id: str = Field(alias="_id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_active_at: Optional[datetime] = None
+    language_preference: Optional[str] = "English"
+    country: Optional[str] = "India"
+    state: Optional[str] = "Odisha"
     
 class TelemetryLog(BaseModel):
     session_id: str
@@ -27,10 +31,13 @@ class TelemetryLog(BaseModel):
     intent: Optional[str] = None
     destination: Optional[str] = None
     tourism_category: Optional[str] = None
+    district: Optional[str] = None
     response_time_ms: Optional[int] = None
+    confidence_score: Optional[float] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     is_guest: bool = True
     is_fallback: bool = False
+    is_error: bool = False
     gap_category: Optional[str] = None
     
 class ChatSummaryModel(BaseModel):

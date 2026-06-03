@@ -9,23 +9,16 @@ const SectionDemand = ({ demandData }) => {
   if (!demandData) return null;
   const { top_destinations, tourism_categories } = demandData;
 
-  const displayDestinations = top_destinations?.length > 0 ? top_destinations : [
-    {name: 'Puri', value: 8430}, {name: 'Konark', value: 6320}, {name: 'Bhubaneswar', value: 5890},
-    {name: 'Chilika', value: 4500}, {name: 'Gopalpur', value: 3900}, {name: 'Simlipal', value: 3500},
-    {name: 'Sambalpur', value: 2900}, {name: 'Cuttack', value: 2650}, {name: 'Puri Beach', value: 2300},
-    {name: 'Raghurajpur', value: 2100}
-  ];
+  const displayDestinations = top_destinations || [];
+  const displayCategories = tourism_categories || [];
 
-  const displayCategories = tourism_categories?.length > 0 ? tourism_categories : [
-    {name: 'Temples & Heritage', value: 35}, {name: 'Beaches', value: 25}, {name: 'Wildlife', value: 18},
-    {name: 'Festivals', value: 12}, {name: 'Food', value: 10}
-  ];
+  const heatMapData = demandData?.heat_map_data || []; // Empty since not provided currently
 
-  const heatMapData = [
-    { x: 60, y: 30, z: 200 }, { x: 70, y: 40, z: 300 }, { x: 65, y: 35, z: 150 },
-    { x: 50, y: 55, z: 80 }, { x: 45, y: 40, z: 120 }, { x: 80, y: 70, z: 250 },
-    { x: 55, y: 20, z: 90 }, { x: 30, y: 60, z: 110 }
-  ];
+  // Calculate Most Queried
+  const topDest = displayDestinations[0] || { name: 'None', value: 0 };
+  const topCat = displayCategories[0] || { name: 'None', value: 0 };
+  const totalQueries = displayDestinations.reduce((acc, curr) => acc + curr.value, 0);
+  const catPercent = totalQueries > 0 ? Math.round((topCat.value / totalQueries) * 100) : 0;
 
   return (
     <section className="mb-8">
@@ -36,15 +29,14 @@ const SectionDemand = ({ demandData }) => {
       
       {/* 4 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        {/* MetricCard uses h-full internally if we updated it, but subtext requires special handling since we changed MetricCard to not take subtext, wait! I'll pass subtext as a fake trend string if needed, or I can just pass a string to 'value' and add a span manually. Actually I can just wrap it in a div and pass to value if it takes a node. Or I can modify MetricCard later. Let's just pass plain strings for now. */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex flex-col h-full">
           <div className="flex justify-between items-start mb-4">
             <div className="bg-sky-50 p-2.5 rounded-lg text-sky-600"><MapPin size={20} strokeWidth={2.5} /></div>
           </div>
           <div className="mt-auto">
             <h3 className="text-sm font-medium text-slate-500 mb-1">Most Queried Destination</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">Puri</p>
-            <p className="text-xs text-slate-400 mt-1">8,430 queries</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">{topDest.name}</p>
+            <p className="text-xs text-slate-400 mt-1">{topDest.value.toLocaleString()} queries</p>
           </div>
         </div>
 
@@ -54,13 +46,13 @@ const SectionDemand = ({ demandData }) => {
           </div>
           <div className="mt-auto">
             <h3 className="text-sm font-medium text-slate-500 mb-1">Most Queried Category</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">Temples</p>
-            <p className="text-xs text-slate-400 mt-1">33% of queries</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">{topCat.name}</p>
+            <p className="text-xs text-slate-400 mt-1">{catPercent}% of queries</p>
           </div>
         </div>
 
-        <MetricCard title="Destination Queries" value="34,560" icon={Map} trend={16.2} />
-        <MetricCard title="Accommodation Queries" value="12,340" icon={Building2} trend={9.8} />
+        <MetricCard title="Destination Queries" value={demandData?.destination_queries?.toLocaleString() || "0"} icon={Map} trend={0} />
+        <MetricCard title="Accommodation Queries" value={demandData?.accommodation_queries?.toLocaleString() || "0"} icon={Building2} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

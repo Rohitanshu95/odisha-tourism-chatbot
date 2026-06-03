@@ -28,15 +28,15 @@ const SectionExecutive = ({ executiveData, operationalData }) => {
       
       {/* 8 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        <MetricCard title="Total Conversations" value={total_sessions.toLocaleString()} icon={MessageSquare} trend={12.5} />
-        <MetricCard title="Total Users" value={total_users.toLocaleString()} icon={Users} trend={8.3} />
-        <MetricCard title="Registered Users" value={registeredUsers.toLocaleString()} icon={UserPlus} trend={15.2} />
-        <MetricCard title="Guest Users" value={guestUsers.toLocaleString()} icon={UserCircle} trend={3.7} />
+        <MetricCard title="Total Conversations" value={total_sessions?.toLocaleString() || "0"} icon={MessageSquare} trend={0} />
+        <MetricCard title="Total Users" value={total_users?.toLocaleString() || "0"} icon={Users} trend={0} />
+        <MetricCard title="Registered Users" value={registeredUsers?.toLocaleString() || "0"} icon={UserPlus} trend={0} />
+        <MetricCard title="Guest Users" value={guestUsers?.toLocaleString() || "0"} icon={UserCircle} trend={0} />
         
-        <MetricCard title="Messages Processed" value={total_queries.toLocaleString()} icon={Activity} trend={18.4} />
-        <MetricCard title="Avg Session Duration" value="4m 32s" icon={Clock} trend={2.1} />
-        <MetricCard title="Returning Users" value={Math.floor(total_users * 0.4).toLocaleString()} icon={RefreshCw} trend={21.3} />
-        <MetricCard title="Avg Msgs/Conversation" value={avgMsgs} icon={MessageSquare} trend={5.8} />
+        <MetricCard title="Messages Processed" value={total_queries?.toLocaleString() || "0"} icon={Activity} trend={0} />
+        <MetricCard title="Avg Session Duration" value={executiveData?.avg_session_duration || "0m 0s"} icon={Clock} trend={0} />
+        <MetricCard title="Returning Users" value={executiveData?.returning_users?.toLocaleString() || "0"} icon={RefreshCw} trend={0} />
+        <MetricCard title="Avg Msgs/Conversation" value={avgMsgs || "0"} icon={MessageSquare} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -73,14 +73,14 @@ const SectionExecutive = ({ executiveData, operationalData }) => {
           <h3 className="text-sm font-semibold text-slate-700 mb-6">Monthly User & Conversation Growth</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={daily_activity || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <LineChart data={executiveData?.monthly_growth || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={true} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={true} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                 <Line name="Users" type="monotone" dataKey="users" stroke="#0284c7" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} />
-                <Line name="Conversations" type="monotone" dataKey="queries" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} />
+                <Line name="Conversations" type="monotone" dataKey="conversations" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -31,9 +31,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    let intervalId;
+
+    const fetchDashboardData = async (showLoading = true) => {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
         const [execRes, demoRes, demandRes, knowRes, opRes] = await Promise.all([
           axios.get('http://localhost:8000/api/v1/dashboard/executive'),
           axios.get('http://localhost:8000/api/v1/dashboard/demographics'),
@@ -53,12 +55,25 @@ const Dashboard = () => {
         console.error("Dashboard fetch error:", err);
         setError("Failed to load dashboard data. Ensure the backend is running.");
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchDashboardData(true);
+    intervalId = setInterval(() => fetchDashboardData(false), 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
+  const handleExportData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `odisha_tourism_report_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
 
   if (loading) {
     return (
@@ -95,6 +110,12 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center space-x-3">
+          <button 
+            onClick={handleExportData}
+            className="flex items-center space-x-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-sm"
+          >
+            <span>Export Report</span>
+          </button>
           <button className="p-2.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-all">
             <Settings size={20} />
           </button>

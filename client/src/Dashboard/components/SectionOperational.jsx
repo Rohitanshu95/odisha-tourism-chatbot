@@ -6,23 +6,8 @@ import { Activity, Users, TrendingUp, Database, Clock, CheckCircle, AlertCircle 
 const SectionOperational = ({ operationalData }) => {
   if (!operationalData) return null;
 
-  // Mocked data to match the visual in the screenshot
-  const activityTrendData = [
-    { date: 'May 29', queries: 3200, users: 1200 },
-    { date: 'May 30', queries: 3600, users: 1400 },
-    { date: 'May 31', queries: 4200, users: 1700 },
-    { date: 'Jun 1',  queries: 4800, users: 1900 },
-    { date: 'Jun 2',  queries: 5200, users: 2100 },
-    { date: 'Jun 3',  queries: 5800, users: 2300 }
-  ];
-
-  const responseTimeData = [
-    { time: '9AM',  timeValue: 0.8 },
-    { time: '12PM', timeValue: 1.2 },
-    { time: '3PM',  timeValue: 1.1 },
-    { time: '6PM',  timeValue: 1.5 },
-    { time: '9PM',  timeValue: 0.9 }
-  ];
+  const activityTrendData = operationalData?.daily_activity || [];
+  const responseTimeData = operationalData?.response_time_trend || [];
 
   return (
     <section className="mb-8">
@@ -33,15 +18,15 @@ const SectionOperational = ({ operationalData }) => {
       
       {/* 8 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        <MetricCard title="Active Users Today" value="2,847" icon={Activity} trend={10.4} />
-        <MetricCard title="Daily Active Users" value="8,520" icon={Users} trend={12.3} />
-        <MetricCard title="Monthly Active Users" value="10,270" icon={TrendingUp} trend={15.7} />
-        <MetricCard title="Total API Requests" value="184.5K" icon={Database} trend={18.4} />
+        <MetricCard title="Active Users Today" value={operationalData?.active_users_today?.toLocaleString() || "0"} icon={Activity} trend={0} />
+        <MetricCard title="Daily Active Users" value={operationalData?.daily_active_users?.toLocaleString() || "0"} icon={Users} trend={0} />
+        <MetricCard title="Monthly Active Users" value={operationalData?.monthly_active_users?.toLocaleString() || "0"} icon={TrendingUp} trend={0} />
+        <MetricCard title="Total API Requests" value={operationalData?.total_api_requests?.toLocaleString() || "0"} icon={Database} trend={0} />
         
-        <MetricCard title="Avg Response Time" value="1.2s" icon={Clock} trend={-8.3} />
-        <MetricCard title="Query Success Rate" value="98.7%" icon={CheckCircle} trend={1.2} />
-        <MetricCard title="Error Rate" value="0.3%" icon={AlertCircle} trend={-42.1} />
-        <MetricCard title="System Availability" value="99.97%" icon={Activity} trend={10.02} />
+        <MetricCard title="Avg Response Time" value={`${operationalData?.avg_response_time_ms || 0}s`} icon={Clock} trend={0} />
+        <MetricCard title="Query Success Rate" value={`${operationalData?.query_success_rate || 0}%`} icon={CheckCircle} trend={0} />
+        <MetricCard title="Error Rate" value={`${operationalData?.error_rate || 0}%`} icon={AlertCircle} trend={0} />
+        <MetricCard title="System Availability" value={`${operationalData?.system_availability || 0}%`} icon={Activity} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -7,30 +7,9 @@ const SectionKnowledge = ({ knowledgeData }) => {
   if (!knowledgeData) return null;
   const { fallback_rate, knowledge_gaps, top_unanswered } = knowledgeData;
 
-  const displayGaps = knowledge_gaps?.length > 0 ? knowledge_gaps : [
-    {name: 'Destination Info', value: 145},
-    {name: 'Accommodation', value: 95},
-    {name: 'Transportation', value: 75},
-    {name: 'Festival/Events', value: 50},
-    {name: 'Local Cuisine', value: 35}
-  ];
-
-  const displayUnanswered = top_unanswered?.length > 0 ? top_unanswered : [
-    {query: 'Best time to visit Daringbadi', count: 42},
-    {query: 'Tribal homestays in Koraput', count: 38},
-    {query: 'Ferry timings to Chilika islands', count: 31},
-    {query: 'Helicopter booking to Puri', count: 28},
-    {query: 'Eco-tourism packages Simlipal', count: 24}
-  ];
-
-  const topFaqs = [
-    {query: 'How to reach Puri from Bhubaneswar?', count: 842},
-    {query: 'Entry timings for Jagannath Temple?', count: 756},
-    {query: 'Best hotels near Konark Sun Temple?', count: 683},
-    {query: 'Chilika Lake boat ride charges?', count: 621},
-    {query: 'Rath Yatra dates and booking?', count: 598},
-    {query: 'Wildlife safari booking Simlipal?', count: 534}
-  ];
+  const displayGaps = knowledge_gaps || [];
+  const displayUnanswered = top_unanswered || [];
+  const topFaqs = knowledgeData?.top_faqs || [];
 
   return (
     <section className="mb-8">
@@ -41,12 +20,12 @@ const SectionKnowledge = ({ knowledgeData }) => {
       
       {/* 6 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        <MetricCard title="Successfully Answered" value={`${(100 - fallback_rate).toFixed(1)}%`} icon={CheckCircle2} trend={3.2} />
-        <MetricCard title="Knowledge Coverage" value="87.5%" icon={Server} trend={5.1} />
-        <MetricCard title="Unanswered Queries" value="409" icon={AlertCircle} trend={-12.4} />
-        <MetricCard title="Low Confidence" value="1,234" icon={HelpCircle} trend={-8.2} />
-        <MetricCard title="Repeated Questions" value="2,847" icon={MessageSquareWarning} trend={6.3} />
-        <MetricCard title="Emerging Topics" value="34" icon={TrendingUp} trend={42.1} />
+        <MetricCard title="Successfully Answered" value={`${(100 - (fallback_rate || 0)).toFixed(1)}%`} icon={CheckCircle2} trend={0} />
+        <MetricCard title="Knowledge Coverage" value="0%" icon={Server} trend={0} />
+        <MetricCard title="Unanswered Queries" value="0" icon={AlertCircle} trend={0} />
+        <MetricCard title="Low Confidence" value="0" icon={HelpCircle} trend={0} />
+        <MetricCard title="Repeated Questions" value="0" icon={MessageSquareWarning} trend={0} />
+        <MetricCard title="Emerging Topics" value="0" icon={TrendingUp} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

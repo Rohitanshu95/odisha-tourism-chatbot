@@ -10,19 +10,11 @@ const SectionDemographics = ({ demographicsData }) => {
   const { locations, languages } = demographicsData;
 
   // Split locations into states and countries (mocking logic here for UI)
-  const states = locations.filter(l => l.name === 'Odisha' || l.name === 'Maharashtra' || l.name === 'Delhi' || l.name === 'West Bengal' || l.name === 'Jharkhand' || l.name === 'Andhra Pradesh' || l.name === 'Chhattisgarh' || l.name === 'Karnataka');
-  const countries = locations.filter(l => !states.includes(l));
+  const states = locations?.filter(l => l.name === 'Odisha' || l.name === 'Maharashtra' || l.name === 'Delhi' || l.name === 'West Bengal' || l.name === 'Jharkhand' || l.name === 'Andhra Pradesh' || l.name === 'Chhattisgarh' || l.name === 'Karnataka') || [];
+  const countries = locations?.filter(l => !states.includes(l)) || [];
 
-  // If no states/countries, provide dummy data to match screenshot
-  const displayStates = states.length > 0 ? states : [
-    {name: 'Odisha', value: 4800}, {name: 'West Bengal', value: 2300}, {name: 'Jharkhand', value: 1800},
-    {name: 'Andhra Pradesh', value: 1600}, {name: 'Chhattisgarh', value: 1400}, {name: 'Delhi', value: 1000},
-    {name: 'Maharashtra', value: 900}, {name: 'Karnataka', value: 600}
-  ];
-  const displayCountries = countries.length > 0 ? countries : [
-    {name: 'India', value: 9500}, {name: 'USA', value: 400}, {name: 'UK', value: 250},
-    {name: 'UAE', value: 200}, {name: 'Singapore', value: 180}, {name: 'Australia', value: 150}
-  ];
+  const displayStates = states;
+  const displayCountries = countries;
 
   return (
     <section className="mb-8">
@@ -69,7 +61,7 @@ const SectionDemographics = ({ demographicsData }) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={languages?.length > 0 ? languages : [{name: 'English', value: 45}, {name: 'Hindi', value: 30}, {name: 'Odia', value: 20}, {name: 'Other', value: 5}]}
+                  data={languages || []}
                   cx="50%"
                   cy="50%"
                   outerRadius={85}
@@ -79,7 +71,7 @@ const SectionDemographics = ({ demographicsData }) => {
                 >
                   {languages?.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  )) || [45, 30, 20, 5].map((v, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -90,10 +82,10 @@ const SectionDemographics = ({ demographicsData }) => {
 
       {/* 4 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MetricCard title="New Registered Users" value="2,135" icon={UserPlus} trend={18.2} />
-        <MetricCard title="Returning Users" value="4,285" icon={TrendingUp} trend={21.3} />
-        <MetricCard title="Registration Rate" value="62.5%" icon={CheckCircle} trend={5.4} />
-        <MetricCard title="Multi-Language Users" value="1,847" icon={Globe} trend={12.8} />
+        <MetricCard title="New Registered Users" value="0" icon={UserPlus} trend={0} />
+        <MetricCard title="Returning Users" value="0" icon={TrendingUp} trend={0} />
+        <MetricCard title="Registration Rate" value="0%" icon={CheckCircle} trend={0} />
+        <MetricCard title="Multi-Language Users" value="0" icon={Globe} trend={0} />
       </div>
     </section>
   );
