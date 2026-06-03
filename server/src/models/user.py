@@ -25,9 +25,13 @@ class TelemetryLog(BaseModel):
     session_id: str
     query: str
     intent: Optional[str] = None
+    destination: Optional[str] = None
+    tourism_category: Optional[str] = None
+    response_time_ms: Optional[int] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     is_guest: bool = True
     is_fallback: bool = False
+    gap_category: Optional[str] = None
     
 class ChatSummaryModel(BaseModel):
     user_id: str

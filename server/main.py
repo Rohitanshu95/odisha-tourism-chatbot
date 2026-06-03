@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.api.chat_routes import router as chat_router
-from src.api.admin_routes import router as admin_router
+from src.api.v1.router import api_router
 from src.config.db import connect_to_mongo, close_mongo_connection
 
 @asynccontextmanager
@@ -22,14 +21,16 @@ app = FastAPI(title="Odisha Tourism Chatbot API", lifespan=lifespan)
 # Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(chat_router, prefix="/api/v1")
-app.include_router(admin_router, prefix="/api/v1/admin")
+app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

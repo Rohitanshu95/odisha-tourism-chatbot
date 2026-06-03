@@ -1,13 +1,45 @@
-from typing import Optional
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from langchain_core.messages import HumanMessage, AIMessage, messages_from_dict, messages_to_dict
+from typing import Optional
+from pydantic import BaseModel, field_validator
 from datetime import datetime
-from src.agents.odisha_agent import create_odisha_agent
+from langchain_core.messages import HumanMessage, AIMessage, messages_from_dict, messages_to_dict
+from src.config.db import get_db
+from src.models.user import TelemetryLog, ChatSummaryModel
+from src.services.chat_state import chat_histories, session_metadata, agent_executor
+import logging
+import time
+import re
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-from pydantic import BaseModel, field_validator
+def extract_telemetry(query: str):
+    query_lower = query.lower()
+    
+    destinations = ["puri", "bhubaneswar", "konark", "cuttack", "chilika", "gopalpur", "simlipal", "bhitarkanika", "daringbadi", "rourkela", "sambalpur"]
+    categories = {
+        "temples": ["temple", "mandir", "jagannath", "lingaraj", "mukteshwar", "rajrani"],
+        "beaches": ["beach", "sea", "ocean", "puri beach", "chandrabhaga", "gopalpur"],
+        "wildlife": ["wildlife", "tiger", "sanctuary", "national park", "simlipal", "bhitarkanika", "crocodile", "bird"],
+        "heritage": ["heritage", "monument", "cave", "khandagiri", "udayagiri", "museum", "history"],
+        "nature": ["waterfall", "hill", "lake", "chilika", "daringbadi", "nature", "scenic"]
+    }
+    
+    found_dest = None
+    for d in destinations:
+        if d in query_lower:
+            found_dest = d.capitalize()
+            break
+            
+    found_cat = None
+    for cat, keywords in categories.items():
+        if any(k in query_lower for k in keywords):
+            found_cat = cat.capitalize()
+            break
+            
+    return found_dest, found_cat
+
 
 class ChatRequest(BaseModel):
     session_id: str
@@ -24,92 +56,7 @@ class ChatResponse(BaseModel):
     response: str
     requires_login: bool = False
 
-# Simple in-memory storage for chat history & metadata
-chat_histories = {}
-session_metadata = {}
-
-from src.models.user import UserCaptureModel, TelemetryLog, ChatSummaryModel
-from src.config.db import get_db
-import uuid
-
-# Initialize agent globally
-try:
-    agent_executor = create_odisha_agent()
-except Exception as e:
-    print(f"Warning: Failed to initialize agent. Error: {e}")
-    agent_executor = None
-
-@router.post("/auth/login")
-async def login_user(user: UserCaptureModel, session_id: str):
-    db = get_db()
-    if db is None:
-        raise HTTPException(status_code=500, detail="Database not initialized")
-    
-    # Check if user exists
-    clean_email = user.email.strip()
-    clean_mobile = user.mobile.strip().lstrip('0')
-    existing_user = await db["users"].find_one({"email": clean_email, "mobile": clean_mobile})
-    
-    if existing_user:
-        user_id = existing_user["_id"]
-    else:
-        user_dict = user.model_dump()
-        user_id = str(uuid.uuid4())
-        user_dict["_id"] = user_id
-        user_dict["email"] = clean_email
-        user_dict["mobile"] = clean_mobile
-        user_dict["created_at"] = datetime.utcnow()
-        await db["users"].insert_one(user_dict)
-        
-    # Check for recent session within 24 hours
-    twenty_four_hours_ago = datetime.utcnow().timestamp() - 86400
-    # MongoDB stores updated_at as ISODate or datetime object. 
-    # We will search by user_id in meta and updated_at
-    from datetime import timedelta
-    time_limit = datetime.utcnow() - timedelta(hours=24)
-    
-    recent_session = await db["chat_sessions"].find_one({
-        "meta.user_id": user_id,
-        "updated_at": {"$gte": time_limit}
-    }, sort=[("updated_at", -1)])
-    
-    frontend_history = []
-    returned_session_id = session_id
-    
-    if recent_session:
-        returned_session_id = recent_session.get("session_id", session_id)
-        # Parse langchain messages to frontend format
-        langchain_msgs = recent_session.get("messages", [])
-        for idx, msg in enumerate(langchain_msgs):
-            sender = 'user' if msg.get("type") == "human" else 'bot'
-            content = msg.get("data", {}).get("content", "")
-            frontend_history.append({
-                "id": int(datetime.utcnow().timestamp() * 1000) + idx,
-                "text": content,
-                "sender": sender
-            })
-            
-        # Ensure it's in memory for immediate chat continuity
-        chat_histories[returned_session_id] = messages_from_dict(langchain_msgs)
-        session_metadata[returned_session_id] = recent_session.get("meta", {})
-    else:
-        # Update session metadata for new session
-        chat_histories[returned_session_id] = []
-        if returned_session_id not in session_metadata:
-            session_metadata[returned_session_id] = {"is_guest": False, "question_count": 0, "user_id": user_id}
-        else:
-            session_metadata[returned_session_id]["is_guest"] = False
-            session_metadata[returned_session_id]["user_id"] = user_id
-
-    return {
-        "status": "success", 
-        "message": "User authenticated", 
-        "user_id": user_id,
-        "session_id": returned_session_id,
-        "history": frontend_history
-    }
-
-@router.post("/chat", response_model=ChatResponse)
+@router.post("", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     if not agent_executor:
         raise HTTPException(status_code=500, detail="Agent not initialized (missing API key?)")
@@ -132,6 +79,10 @@ async def chat_endpoint(request: ChatRequest):
     history = chat_histories[request.session_id]
     meta = session_metadata[request.session_id]
     
+    # Ensure keys exist for older sessions
+    meta.setdefault("is_guest", True)
+    meta.setdefault("question_count", 0)
+    
     requires_login = False
     if meta["is_guest"] and meta["question_count"] >= 5:
         requires_login = True
@@ -151,7 +102,11 @@ async def chat_endpoint(request: ChatRequest):
         # For langgraph react agent, state is just a list of messages
         messages = history + [HumanMessage(content=enriched_message)]
         
+        start_time = time.time()
         result = await agent_executor.ainvoke({"messages": messages})
+        end_time = time.time()
+        
+        response_time_ms = int((end_time - start_time) * 1000)
         
         # The last message in the returned state is the AI's response
         output_content = result["messages"][-1].content
@@ -186,11 +141,15 @@ async def chat_endpoint(request: ChatRequest):
         # Log Telemetry asynchronously
         db = get_db()
         if db is not None:
+            dest, cat = extract_telemetry(request.message)
             log_entry = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
                 is_guest=meta["is_guest"],
-                is_fallback=False
+                is_fallback=False,
+                destination=dest,
+                tourism_category=cat,
+                response_time_ms=response_time_ms
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
             
@@ -204,11 +163,19 @@ async def chat_endpoint(request: ChatRequest):
         # Log the failure in telemetry
         db = get_db()
         if db is not None:
+            dest, cat = extract_telemetry(request.message)
+            gap_cat = "Unknown"
+            if cat: gap_cat = f"{cat} Knowledge"
+            elif dest: gap_cat = f"{dest} Details"
+            
             fallback_log = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
                 is_guest=meta.get("is_guest", True),
-                is_fallback=True
+                is_fallback=True,
+                destination=dest,
+                tourism_category=cat,
+                gap_category=gap_cat
             )
             await db["telemetry"].insert_one(fallback_log.model_dump())
             
@@ -217,7 +184,7 @@ async def chat_endpoint(request: ChatRequest):
 class EndSessionRequest(BaseModel):
     session_id: str
 
-@router.post("/chat/end")
+@router.post("/end")
 async def end_session(request: EndSessionRequest):
     session_id = request.session_id
     meta = session_metadata.get(session_id, {})
@@ -237,7 +204,6 @@ async def end_session(request: EndSessionRequest):
             
             from src.llm.client import get_llm
             from langchain_core.messages import HumanMessage
-            from datetime import datetime
             
             llm = get_llm(temperature=0.0)
             prompt = f"Summarize the following conversation in 1-2 concise sentences, focusing on the user's intent and the outcome.\n\n{transcript}"

@@ -78,9 +78,19 @@ function Widget() {
   const requestLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           setUserLocation(`${position.coords.latitude},${position.coords.longitude}`);
           setLocationConsent('granted');
+          
+          try {
+            await axios.post('http://localhost:8000/api/v1/location', {
+              session_id: sessionId,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          } catch (err) {
+            console.error("Failed to save location:", err);
+          }
         },
         (error) => {
           console.log("Geolocation error:", error);
