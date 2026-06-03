@@ -66,13 +66,7 @@ const Dashboard = () => {
   }, []);
 
   const handleExportData = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `odisha_tourism_report_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    window.print();
   };
 
   if (loading) {
@@ -130,7 +124,7 @@ const Dashboard = () => {
       </header>
 
       {/* Tabbed Navigation Bar */}
-      <div className="bg-white border-b border-slate-200 sticky top-[73px] z-40 shadow-sm">
+      <div className="bg-white border-b border-slate-200 sticky top-[73px] z-40 shadow-sm print:hidden">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex overflow-x-auto hide-scrollbar space-x-6">
             {TABS.map((tab) => {
@@ -156,13 +150,23 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Dashboard */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-8 flex-1 bg-slate-50">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-8 flex-1 bg-slate-50 print:bg-white">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {activeTab === 'executive' && <SectionExecutive executiveData={data.executive} operationalData={data.operational} />}
-          {activeTab === 'demographics' && <SectionDemographics demographicsData={data.demographics} />}
-          {activeTab === 'demand' && <SectionDemand demandData={data.demand} />}
-          {activeTab === 'knowledge' && <SectionKnowledge knowledgeData={data.knowledge} />}
-          {activeTab === 'operational' && <SectionOperational operationalData={data.operational} />}
+          <div className={activeTab === 'executive' ? 'block' : 'hidden print:block'}>
+            <SectionExecutive executiveData={data.executive} operationalData={data.operational} />
+          </div>
+          <div className={activeTab === 'demographics' ? 'block' : 'hidden print:block'}>
+            <SectionDemographics demographicsData={data.demographics} />
+          </div>
+          <div className={activeTab === 'demand' ? 'block' : 'hidden print:block'}>
+            <SectionDemand demandData={data.demand} />
+          </div>
+          <div className={activeTab === 'knowledge' ? 'block' : 'hidden print:block'}>
+            <SectionKnowledge knowledgeData={data.knowledge} />
+          </div>
+          <div className={activeTab === 'operational' ? 'block' : 'hidden print:block'}>
+            <SectionOperational operationalData={data.operational} />
+          </div>
         </div>
       </main>
     </div>

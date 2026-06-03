@@ -82,10 +82,10 @@ const SectionDemographics = ({ demographicsData }) => {
 
       {/* 4 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MetricCard title="New Registered Users" value="0" icon={UserPlus} trend={0} />
-        <MetricCard title="Returning Users" value="0" icon={TrendingUp} trend={0} />
-        <MetricCard title="Registration Rate" value="0%" icon={CheckCircle} trend={0} />
-        <MetricCard title="Multi-Language Users" value="0" icon={Globe} trend={0} />
+        <MetricCard title="New Registered Users" value={demographicsData?.new_registered_users?.toLocaleString() || "0"} icon={UserPlus} trend={0} />
+        <MetricCard title="Returning Users" value={demographicsData?.returning_users?.toLocaleString() || "0"} icon={TrendingUp} trend={0} />
+        <MetricCard title="Registration Rate" value={`${demographicsData?.registration_rate || 0}%`} icon={CheckCircle} trend={0} />
+        <MetricCard title="Multi-Language Users" value={demographicsData?.multi_language_users?.toLocaleString() || "0"} icon={Globe} trend={0} />
       </div>
     </section>
   );

@@ -912,3 +912,38 @@ h1, h2, h3, .serif-text {
   border-color: var(--terra-mid);
   color: var(--terra-dk);
 }
+
+@media print {
+  /* Hide the header buttons during print */
+  header button {
+    display: none !important;
+  }
+  
+  /* Ensure background colors and gradients are printed */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Remove shadows and adjust borders for clean PDF look */
+  .bg-white {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  
+  /* Prevent charts from splitting across pages */
+  .grid > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Optional: hide the whole header except logo/title */
+  header {
+    position: static !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+}

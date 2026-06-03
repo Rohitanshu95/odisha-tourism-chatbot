@@ -21,11 +21,11 @@ const SectionKnowledge = ({ knowledgeData }) => {
       {/* 6 Metric Cards Grid matching the screenshot */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <MetricCard title="Successfully Answered" value={`${(100 - (fallback_rate || 0)).toFixed(1)}%`} icon={CheckCircle2} trend={0} />
-        <MetricCard title="Knowledge Coverage" value="0%" icon={Server} trend={0} />
-        <MetricCard title="Unanswered Queries" value="0" icon={AlertCircle} trend={0} />
-        <MetricCard title="Low Confidence" value="0" icon={HelpCircle} trend={0} />
-        <MetricCard title="Repeated Questions" value="0" icon={MessageSquareWarning} trend={0} />
-        <MetricCard title="Emerging Topics" value="0" icon={TrendingUp} trend={0} />
+        <MetricCard title="Knowledge Coverage" value={`${knowledgeData?.knowledge_coverage || 0}%`} icon={Server} trend={0} />
+        <MetricCard title="Unanswered Queries" value={knowledgeData?.unanswered_queries?.toLocaleString() || "0"} icon={AlertCircle} trend={0} />
+        <MetricCard title="Low Confidence" value={knowledgeData?.low_confidence_count?.toLocaleString() || "0"} icon={HelpCircle} trend={0} />
+        <MetricCard title="Repeated Questions" value={knowledgeData?.repeated_questions?.toLocaleString() || "0"} icon={MessageSquareWarning} trend={0} />
+        <MetricCard title="Emerging Topics" value={knowledgeData?.emerging_topics?.toLocaleString() || "0"} icon={TrendingUp} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

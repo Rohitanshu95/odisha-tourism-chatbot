@@ -142,9 +142,37 @@ async def get_demographics():
         lang_cursor = db.users.aggregate(lang_pipeline)
         languages = [{"name": doc["_id"], "value": doc["count"]} for doc in await lang_cursor.to_list(length=10)]
 
+        # New Registered Users (Last 7 days)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        new_registered = await db.users.count_documents({"created_at": {"$gte": seven_days_ago}})
+        
+        # Total Users
+        total_users = await db.users.count_documents({})
+        total_guests = await db.chat_sessions.count_documents({"meta.is_guest": True}) # rough estimate of guest sessions
+        # Registration rate
+        total_unique = total_users + total_guests
+        registration_rate = (total_users / total_unique * 100) if total_unique > 0 else 0
+        
+        # Returning Users
+        return_users_pipeline = [
+            {"$match": {"meta.is_guest": False}},
+            {"$group": {"_id": "$user_id", "session_count": {"$sum": 1}}},
+            {"$match": {"session_count": {"$gt": 1}}}
+        ]
+        ret_cursor = db.chat_sessions.aggregate(return_users_pipeline)
+        ret_docs = await ret_cursor.to_list(length=None)
+        returning_users = len(ret_docs)
+        
+        # Multi-Language Users (preference != "English")
+        multi_lang_users = await db.users.count_documents({"language_preference": {"$nin": ["English", None]}})
+
         return {
             "locations": states + countries, 
-            "languages": languages
+            "languages": languages,
+            "new_registered_users": new_registered,
+            "returning_users": returning_users,
+            "registration_rate": round(registration_rate, 1),
+            "multi_language_users": multi_lang_users
         }
     except Exception as e:
         logger.error(f"Error fetching demographics: {e}")
@@ -152,7 +180,7 @@ async def get_demographics():
 
 @router.get("/demand")
 async def get_demand_analytics():
-    """Demand analytics (Top destinations, categories)."""
+    """Demand analytics (Top destinations, categories, heat map)."""
     try:
         db = get_db()
         
@@ -175,9 +203,44 @@ async def get_demand_analytics():
         cat_cursor = db.telemetry.aggregate(cat_pipeline)
         categories = [{"name": doc["_id"], "value": doc["count"]} for doc in await cat_cursor.to_list(length=10)]
 
+        # Destination Queries (Total where destination is not null)
+        destination_queries = await db.telemetry.count_documents({"destination": {"$ne": None}})
+        
+        # Accommodation Queries (Total where category is Accommodation)
+        accommodation_queries = await db.telemetry.count_documents({"tourism_category": "Accommodation"})
+
+        # Heat Map Data Generation
+        # Map common destinations to approximate (x, y) coordinates on a 0-100 grid of Odisha
+        geo_map = {
+            "Bhubaneswar": {"x": 70, "y": 50},
+            "Puri": {"x": 75, "y": 60},
+            "Cuttack": {"x": 72, "y": 45},
+            "Konark": {"x": 80, "y": 55},
+            "Chilika": {"x": 65, "y": 70},
+            "Rourkela": {"x": 30, "y": 15},
+            "Sambalpur": {"x": 40, "y": 30},
+            "Berhampur": {"x": 55, "y": 80},
+            "Balasore": {"x": 85, "y": 20}
+        }
+        
+        heat_map_data = []
+        for dest in destinations:
+            name = dest["name"]
+            # Default to center if unknown location to still show it on the map
+            coords = geo_map.get(name, {"x": 50, "y": 50})
+            heat_map_data.append({
+                "x": coords["x"],
+                "y": coords["y"],
+                "z": dest["value"] * 20, # Scale up for bubble size visually
+                "name": name
+            })
+
         return {
             "top_destinations": destinations,
-            "tourism_categories": categories
+            "tourism_categories": categories,
+            "destination_queries": destination_queries,
+            "accommodation_queries": accommodation_queries,
+            "heat_map_data": heat_map_data
         }
     except Exception as e:
         logger.error(f"Error fetching demand analytics: {e}")
@@ -189,10 +252,35 @@ async def get_knowledge_analytics():
     try:
         db = get_db()
         
-        # Fallback rate
+        # Fallback rate & Unanswered Queries
         total = await db.telemetry.count_documents({})
         fallbacks = await db.telemetry.count_documents({"is_fallback": True})
         fallback_rate = (fallbacks / total * 100) if total > 0 else 0
+        
+        # Knowledge Coverage
+        knowledge_coverage = 100 - fallback_rate
+        
+        # Low Confidence
+        low_confidence_count = await db.telemetry.count_documents({"confidence_score": {"$lt": 0.7}})
+        
+        # Repeated Questions (Queries asked > 1 time)
+        repeated_pipeline = [
+            {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        rep_cursor = db.telemetry.aggregate(repeated_pipeline)
+        rep_docs = await rep_cursor.to_list(length=None)
+        repeated_questions = len(rep_docs)
+        
+        # Emerging Topics (Queries asked > 0 times in last 7 days that were not asked before, simplified here to recent unique gaps)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        emerging_pipeline = [
+            {"$match": {"timestamp": {"$gte": seven_days_ago}, "is_fallback": True, "gap_category": {"$ne": None}}},
+            {"$group": {"_id": "$gap_category"}}
+        ]
+        em_cursor = db.telemetry.aggregate(emerging_pipeline)
+        em_docs = await em_cursor.to_list(length=None)
+        emerging_topics = len(em_docs)
         
         # Knowledge Gaps
         gap_pipeline = [
@@ -212,11 +300,27 @@ async def get_knowledge_analytics():
         ]
         un_cursor = db.telemetry.aggregate(unanswered_pipeline)
         unanswered = [{"query": doc["_id"], "count": doc["count"]} for doc in await un_cursor.to_list(length=5)]
+        
+        # Top FAQs
+        faq_pipeline = [
+            {"$match": {"is_fallback": False}},
+            {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 10}
+        ]
+        faq_cursor = db.telemetry.aggregate(faq_pipeline)
+        faqs = [{"query": doc["_id"], "count": doc["count"]} for doc in await faq_cursor.to_list(length=10)]
 
         return {
             "fallback_rate": round(fallback_rate, 2),
+            "knowledge_coverage": round(knowledge_coverage, 2),
+            "unanswered_queries": fallbacks,
+            "low_confidence_count": low_confidence_count,
+            "repeated_questions": repeated_questions,
+            "emerging_topics": emerging_topics,
             "knowledge_gaps": gaps,
-            "top_unanswered": unanswered
+            "top_unanswered": unanswered,
+            "top_faqs": faqs
         }
     except Exception as e:
         logger.error(f"Error fetching knowledge analytics: {e}")
@@ -285,6 +389,23 @@ async def get_operational_metrics():
         # System Availability (pseudo-calculated based on errors)
         system_availability = 100 - (error_rate * 0.1) if total_api_requests > 0 else 100
 
+        # Response Time Trend
+        trend_pipeline = [
+            {"$match": {"timestamp": {"$gte": seven_days_ago}, "response_time_ms": {"$ne": None}}},
+            {"$project": {
+                "date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
+                "response_time_sec": {"$divide": ["$response_time_ms", 1000]}
+            }},
+            {"$group": {
+                "_id": "$date",
+                "avg_time": {"$avg": "$response_time_sec"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+        trend_cursor = db.telemetry.aggregate(trend_pipeline)
+        trend_docs = await trend_cursor.to_list(length=10)
+        response_time_trend = [{"time": doc["_id"][-5:], "timeValue": round(doc["avg_time"], 2)} for doc in trend_docs]
+
         return {
             "avg_response_time_ms": round(avg_response_time, 2),
             "daily_activity": daily_activity,
@@ -294,7 +415,8 @@ async def get_operational_metrics():
             "total_api_requests": total_api_requests,
             "query_success_rate": round(query_success_rate, 2),
             "error_rate": round(error_rate, 2),
-            "system_availability": round(system_availability, 3)
+            "system_availability": round(system_availability, 3),
+            "response_time_trend": response_time_trend
         }
     except Exception as e:
         logger.error(f"Error fetching operational metrics: {e}")

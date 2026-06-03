@@ -57,7 +57,7 @@ const SectionOperational = ({ operationalData }) => {
               <LineChart data={responseTimeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#e2e8f0" />
                 <XAxis dataKey="time" stroke="#94a3b8" fontSize={10} tickLine={true} axisLine={true} />
-                <YAxis stroke="#94a3b8" fontSize={10} tickLine={true} axisLine={true} domain={[0, 1.6]} ticks={[0, 0.4, 0.8, 1.2, 1.6]} />
+                <YAxis stroke="#94a3b8" fontSize={10} tickLine={true} axisLine={true} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                 <Line type="monotone" dataKey="timeValue" stroke="#06b6d4" strokeWidth={2} dot={{ r: 5, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 7 }} />
               </LineChart>
