@@ -152,8 +152,20 @@ async def chat_endpoint(request: ChatRequest):
             except LangDetectException:
                 logger.warning(f"Could not detect language for session {request.session_id}")
 
-            sentiment_dict = analyzer.polarity_scores(request.message)
-            sentiment_score = sentiment_dict['compound']
+            user_sentiment = analyzer.polarity_scores(request.message)['compound']
+            ai_sentiment = analyzer.polarity_scores(output_message)['compound']
+            combined_score = (user_sentiment + ai_sentiment) / 2
+            
+            msg_lower = request.message.lower()
+            negative_keywords = ["complain", "complaint", "issue", "problem", "terrible", "bad", "worst"]
+            if any(k in msg_lower for k in negative_keywords):
+                combined_score -= 0.5  # Penalize score for explicit negative keywords
+            
+            sentiment_cat = "Neutral"
+            if combined_score > 0.2:
+                sentiment_cat = "Positive"
+            elif combined_score < -0.2:
+                sentiment_cat = "Negative"
 
             log_entry = TelemetryLog(
                 session_id=request.session_id,
@@ -164,7 +176,8 @@ async def chat_endpoint(request: ChatRequest):
                 tourism_category=cat,
                 response_time_ms=response_time_ms,
                 language=detected_language,
-                sentiment_score=sentiment_score
+                sentiment_score=combined_score,
+                sentiment_category=sentiment_cat
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
 
@@ -191,14 +204,23 @@ async def chat_endpoint(request: ChatRequest):
             except LangDetectException:
                 logger.warning(f"Could not detect language for session {request.session_id} on fallback")
 
-            sentiment_dict = analyzer.polarity_scores(request.message)
-            sentiment_score = sentiment_dict['compound']
+            fallbackText = "Sorry, I ran into an issue while processing your request. Please try again."
+            user_sentiment = analyzer.polarity_scores(request.message)['compound']
+            ai_sentiment = analyzer.polarity_scores(fallbackText)['compound']
+            combined_score = (user_sentiment + ai_sentiment) / 2
+            
+            # Heavy penalty if consecutive fallbacks
+            if meta.get("consecutive_fallbacks", 0) >= 2:
+                combined_score -= 0.5
+                
+            sentiment_cat = "Neutral"
+            if combined_score > 0.2:
+                sentiment_cat = "Positive"
+            elif combined_score < -0.2:
+                sentiment_cat = "Negative"
 
             # Track consecutive fallbacks
             meta["consecutive_fallbacks"] = meta.get("consecutive_fallbacks", 0) + 1
-            if meta["consecutive_fallbacks"] >= 2:
-                # If they hit a fallback twice in a row, penalize sentiment heavily
-                sentiment_score -= 0.5 
 
             fallback_log = TelemetryLog(
                 session_id=request.session_id,
@@ -211,7 +233,8 @@ async def chat_endpoint(request: ChatRequest):
                 gap_category=gap_cat,
                 response_time_ms=int((time.time() - start_time) * 1000) if "start_time" in locals() else None,
                 language=detected_language,
-                sentiment_score=sentiment_score
+                sentiment_score=combined_score,
+                sentiment_category=sentiment_cat
             )
             await db["telemetry"].insert_one(fallback_log.model_dump())
 
@@ -232,10 +255,14 @@ class FeedbackRequest(BaseModel):
 async def submit_feedback(request: FeedbackRequest):
     db = get_db()
     if db is not None:
+        sentiment_cat = "Positive" if request.feedback == "Positive" else "Negative"
         # Update the most recent telemetry log matching this session and query
         result = await db["telemetry"].update_many(
             {"session_id": request.session_id, "query": request.query},
-            {"$set": {"explicit_feedback": request.feedback}}
+            {"$set": {
+                "explicit_feedback": request.feedback,
+                "sentiment_category": sentiment_cat
+            }}
         )
         if result.modified_count > 0:
             return {"status": "success"}

@@ -45,7 +45,7 @@ const SectionExecutive = ({ executiveData, operationalData, satisfactionData }) 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-6 flex items-center">
             <Star className="mr-2 text-amber-500" size={18} />
-            Customer Satisfaction (CSAT) Breakdown
+            User Satisfaction Breakdown
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 flex flex-col justify-center space-y-4">
@@ -82,7 +82,7 @@ const SectionExecutive = ({ executiveData, operationalData, satisfactionData }) 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* User Type Distribution Pie Chart */}
         <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-6">User Type Distribution</h3>
@@ -110,6 +110,41 @@ const SectionExecutive = ({ executiveData, operationalData, satisfactionData }) 
             </ResponsiveContainer>
           </div>
         </div>
+        
+        {/* Sentiment Distribution Donut Chart */}
+        {satisfactionData?.sentiment_distribution && (
+          <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-6">Sentiment Distribution</h3>
+            <div className="h-64">
+              {satisfactionData.sentiment_distribution.reduce((acc, curr) => acc + curr.value, 0) === 0 ? (
+                <div className="flex items-center justify-center h-full text-sm text-slate-400">
+                  No sentiment data yet. Chat to generate data!
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={satisfactionData.sentiment_distribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {satisfactionData.sentiment_distribution.map((entry, index) => {
+                         const colors = { "Positive": "#10b981", "Neutral": "#94a3b8", "Negative": "#ef4444" };
+                         return <Cell key={`cell-${index}`} fill={colors[entry.name] || "#94a3b8"} />;
+                      })}
+                    </Pie>
+                    <Tooltip />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        )}
         
         {/* Monthly User & Conversation Growth Line Chart */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-6">

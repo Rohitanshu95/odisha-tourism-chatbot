@@ -502,11 +502,29 @@ async def get_satisfaction_metrics():
         guests = await get_stats_for_group({"is_guest": True})
         registered = await get_stats_for_group({"is_guest": False})
             
+        # Sentiment Category Distribution
+        sentiment_pipeline = [
+            {"$match": {"sentiment_category": {"$ne": None}}},
+            {"$group": {"_id": "$sentiment_category", "count": {"$sum": 1}}}
+        ]
+        sentiment_cursor = db.telemetry.aggregate(sentiment_pipeline)
+        sentiment_docs = await sentiment_cursor.to_list(length=None)
+        
+        distribution = {"Positive": 0, "Negative": 0, "Neutral": 0}
+        for doc in sentiment_docs:
+            if doc["_id"] in distribution:
+                distribution[doc["_id"]] = doc["count"]
+                
         return {
             "overall_csat": overall["csat"],
             "breakdown": [
                 { "user_type": "Guest Users", "satisfied": guests["satisfied"], "dissatisfied": guests["dissatisfied"], "csat": guests["csat"] },
                 { "user_type": "Registered Users", "satisfied": registered["satisfied"], "dissatisfied": registered["dissatisfied"], "csat": registered["csat"] }
+            ],
+            "sentiment_distribution": [
+                {"name": "Positive", "value": distribution["Positive"]},
+                {"name": "Neutral", "value": distribution["Neutral"]},
+                {"name": "Negative", "value": distribution["Negative"]}
             ]
         }
     except Exception as e:

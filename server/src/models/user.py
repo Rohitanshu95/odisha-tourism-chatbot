@@ -41,6 +41,7 @@ class TelemetryLog(BaseModel):
     gap_category: Optional[str] = None
     language: Optional[str] = None
     sentiment_score: Optional[float] = 0.0
+    sentiment_category: Optional[str] = "Neutral"
     explicit_feedback: Optional[str] = None
     
 class ChatSummaryModel(BaseModel):
