@@ -26,7 +26,6 @@ function Widget() {
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [pendingQuery, setPendingQuery] = useState(null);
   const [feedbackState, setFeedbackState] = useState({});
-  const [timeLeft, setTimeLeft] = useState(120);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -52,25 +51,6 @@ function Widget() {
       }
     }
   }, [messages, isLoading, isOpen, isReturningUser]);
-
-  useEffect(() => {
-    let timer;
-    if (isOpen && authMode === 'guest-chat' && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setAuthMode('login');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (timeLeft <= 0 && authMode === 'guest-chat') {
-      setAuthMode('login');
-    }
-    return () => clearInterval(timer);
-  }, [isOpen, authMode, timeLeft]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -303,11 +283,6 @@ function Widget() {
           <div className="hdr-icons">
             {authMode === 'authenticated' || authMode === 'guest-chat' ? (
                 <>
-                  {authMode === 'guest-chat' && (
-                    <div className="hdr-icon" style={{fontSize: '11px', fontWeight: 'bold', padding: '0 6px', color: timeLeft < 30 ? '#ef4444' : 'inherit', whiteSpace: 'nowrap', borderRadius: '4px', background: 'rgba(255,255,255,0.2)'}} title="Time Remaining">
-                      {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                    </div>
-                  )}
                   <div className="hdr-icon" title="Toggle Voice Output" onClick={() => setIsTTS(!isTTS)}>
                     {isTTS ? <Volume2 size={16} /> : <VolumeX size={16} />}
                   </div>
@@ -504,8 +479,9 @@ function Widget() {
             <div style={{
               position: 'absolute',
               top: 0, left: 0, right: 0, bottom: 0,
-              backgroundImage: 'url(/chat-background.png)',
-              backgroundSize: 'cover',
+              backgroundImage: 'url(/odisha-culture-removebg-preview.png)',
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center',
               filter: 'blur(4px)',
               opacity: 0.35,

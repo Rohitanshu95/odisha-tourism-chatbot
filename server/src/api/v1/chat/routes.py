@@ -77,24 +77,24 @@ async def chat_endpoint(request: ChatRequest):
                 
         if not history_loaded:
             chat_histories[request.session_id] = []
-            session_metadata[request.session_id] = {"is_guest": True, "start_time": time.time()}
+            session_metadata[request.session_id] = {"is_guest": True, "question_count": 0}
             
     history = chat_histories[request.session_id]
     meta = session_metadata[request.session_id]
     
     # Ensure keys exist for older sessions
     meta.setdefault("is_guest", True)
-    meta.setdefault("start_time", time.time())
+    meta.setdefault("question_count", 0)
     
     requires_login = False
-    if meta["is_guest"]:
-        elapsed = time.time() - meta["start_time"]
-        if elapsed > 120:
-            requires_login = True
-            return ChatResponse(
-                response="Your 2-minute free trial has expired. Please log in to continue your journey.",
-                requires_login=True
-            )
+    if meta["is_guest"] and meta["question_count"] >= 5:
+        requires_login = True
+        return ChatResponse(
+            response="You have reached the guest limit of 5 queries. Please log in to continue your journey.",
+            requires_login=True
+        )
+        
+    meta["question_count"] += 1
 
     try:
         # Contextualize the message if user location is available
