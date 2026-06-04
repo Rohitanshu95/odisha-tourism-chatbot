@@ -40,6 +40,8 @@ class TelemetryLog(BaseModel):
     is_error: bool = False
     gap_category: Optional[str] = None
     language: Optional[str] = None
+    sentiment_score: Optional[float] = 0.0
+    explicit_feedback: Optional[str] = None
     
 class ChatSummaryModel(BaseModel):
     user_id: str

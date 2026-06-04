@@ -23,7 +23,8 @@ const Dashboard = () => {
     demographics: null,
     demand: null,
     knowledge: null,
-    operational: null
+    operational: null,
+    satisfaction: null
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +50,7 @@ const Dashboard = () => {
           { key: 'demand', promise: axios.get('http://localhost:8000/api/v1/dashboard/demand', requestConfig) },
           { key: 'knowledge', promise: axios.get('http://localhost:8000/api/v1/dashboard/knowledge', requestConfig) },
           { key: 'operational', promise: axios.get('http://localhost:8000/api/v1/dashboard/operational', requestConfig) },
+          { key: 'satisfaction', promise: axios.get('http://localhost:8000/api/v1/dashboard/satisfaction', requestConfig) },
         ];
 
         const results = await Promise.allSettled(requests.map((request) => request.promise));
@@ -176,7 +178,7 @@ const Dashboard = () => {
       <main className="w-full px-4 sm:px-6 lg:px-8 py-8 flex-1 bg-slate-50 print:bg-white">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className={activeTab === 'executive' ? 'block' : 'hidden print:block'}>
-            <SectionExecutive executiveData={data.executive} operationalData={data.operational} />
+            <SectionExecutive executiveData={data.executive} operationalData={data.operational} satisfactionData={data.satisfaction} />
           </div>
           <div className={activeTab === 'demographics' ? 'block' : 'hidden print:block'}>
             <SectionDemographics demographicsData={data.demographics} />

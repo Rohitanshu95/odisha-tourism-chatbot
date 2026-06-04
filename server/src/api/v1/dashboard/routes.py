@@ -476,3 +476,39 @@ async def get_operational_metrics():
     except Exception as e:
         logger.error(f"Error fetching operational metrics: {e}")
         raise HTTPException(status_code=500, detail="Error fetching data")
+
+@router.get("/satisfaction")
+async def get_satisfaction_metrics():
+    try:
+        db = get_required_db()
+        
+        async def get_stats_for_group(match_query):
+            explicit_pos = await db.telemetry.count_documents({**match_query, "explicit_feedback": "Positive"})
+            explicit_neg = await db.telemetry.count_documents({**match_query, "explicit_feedback": "Negative"})
+            implicit_pos = await db.telemetry.count_documents({**match_query, "sentiment_score": {"$gte": -0.2}})
+            implicit_neg = await db.telemetry.count_documents({**match_query, "sentiment_score": {"$lt": -0.2}})
+            
+            total_signals = explicit_pos + explicit_neg + implicit_pos + implicit_neg
+            total_positive = explicit_pos + implicit_pos
+            csat = (total_positive / total_signals) * 100.0 if total_signals > 0 else 100.0
+            
+            return {
+                "satisfied": total_positive,
+                "dissatisfied": explicit_neg + implicit_neg,
+                "csat": round(csat, 1)
+            }
+        
+        overall = await get_stats_for_group({})
+        guests = await get_stats_for_group({"is_guest": True})
+        registered = await get_stats_for_group({"is_guest": False})
+            
+        return {
+            "overall_csat": overall["csat"],
+            "breakdown": [
+                { "user_type": "Guest Users", "satisfied": guests["satisfied"], "dissatisfied": guests["dissatisfied"], "csat": guests["csat"] },
+                { "user_type": "Registered Users", "satisfied": registered["satisfied"], "dissatisfied": registered["dissatisfied"], "csat": registered["csat"] }
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching satisfaction metrics: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching data")

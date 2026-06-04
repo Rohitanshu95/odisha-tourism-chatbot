@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles, User, ArrowLeft, LogIn, Compass, MapPin } from 'lucide-react';
+import { Send, Map, Sun, Utensils, Info, MessageSquare, X, Mic, MicOff, Volume2, VolumeX, Moon, Sparkles, User, ArrowLeft, LogIn, Compass, MapPin, ThumbsUp, ThumbsDown } from 'lucide-react';
 import './index.css';
 
 const TOP_QUICK_REPLIES = [
-  { label: 'Sacred Odisha', icon: '🚶‍♂️', type: 'normal' },
+  { label: 'Sacred Odisha', icon: '🛕', type: 'normal' },
   { label: 'Wildlife Sanctuaries Of Odisha', icon: '🍃', type: 'normal' },
   { label: 'Beaches & Coastal', icon: '🌊', type: 'normal' },
-  { label: 'Waterfalls & Scenic Landscapes', icon: '🌊', type: 'normal' },
+  { label: 'I want to complain', icon: '⚠️', type: 'normal' },
 ];
 
 function Widget() {
@@ -25,6 +25,8 @@ function Widget() {
   const [sessionId, setSessionId] = useState(() => Math.random().toString(36).substring(7));
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [pendingQuery, setPendingQuery] = useState(null);
+  const [feedbackState, setFeedbackState] = useState({});
+  const [timeLeft, setTimeLeft] = useState(120);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -50,6 +52,25 @@ function Widget() {
       }
     }
   }, [messages, isLoading, isOpen, isReturningUser]);
+
+  useEffect(() => {
+    let timer;
+    if (isOpen && authMode === 'guest-chat' && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setAuthMode('login');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (timeLeft <= 0 && authMode === 'guest-chat') {
+      setAuthMode('login');
+    }
+    return () => clearInterval(timer);
+  }, [isOpen, authMode, timeLeft]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -109,6 +130,20 @@ function Widget() {
     } else {
       recognitionRef.current?.start();
       setIsRecording(true);
+    }
+  };
+
+  const handleFeedback = async (msgId, queryText, type) => {
+    if (feedbackState[msgId] === type) return; // Prevent duplicate clicks on same button
+    setFeedbackState(prev => ({ ...prev, [msgId]: type }));
+    try {
+      await axios.post('http://localhost:8000/api/v1/chat/feedback', {
+        session_id: sessionId,
+        query: queryText,
+        feedback: type
+      });
+    } catch (err) {
+      console.error("Failed to submit feedback", err);
     }
   };
 
@@ -268,6 +303,11 @@ function Widget() {
           <div className="hdr-icons">
             {authMode === 'authenticated' || authMode === 'guest-chat' ? (
                 <>
+                  {authMode === 'guest-chat' && (
+                    <div className="hdr-icon" style={{fontSize: '11px', fontWeight: 'bold', padding: '0 6px', color: timeLeft < 30 ? '#ef4444' : 'inherit', whiteSpace: 'nowrap', borderRadius: '4px', background: 'rgba(255,255,255,0.2)'}} title="Time Remaining">
+                      {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </div>
+                  )}
                   <div className="hdr-icon" title="Toggle Voice Output" onClick={() => setIsTTS(!isTTS)}>
                     {isTTS ? <Volume2 size={16} /> : <VolumeX size={16} />}
                   </div>
@@ -505,6 +545,24 @@ function Widget() {
                       <span className="message-time">
                         {new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
+                      {msg.sender === 'bot' && msg.id > 1 && (
+                        <div className="message-feedback" style={{display: 'flex', gap: '8px', marginTop: '4px', marginLeft: '2px'}}>
+                          <button 
+                            onClick={() => handleFeedback(msg.id, messages[messages.findIndex(m => m.id === msg.id) - 1]?.text || "", "Positive")}
+                            style={{background: 'none', border: 'none', cursor: 'pointer', color: feedbackState[msg.id] === 'Positive' ? '#22c55e' : '#94a3b8', padding: 0}}
+                            title="Helpful"
+                          >
+                            <ThumbsUp size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleFeedback(msg.id, messages[messages.findIndex(m => m.id === msg.id) - 1]?.text || "", "Negative")}
+                            style={{background: 'none', border: 'none', cursor: 'pointer', color: feedbackState[msg.id] === 'Negative' ? '#ef4444' : '#94a3b8', padding: 0}}
+                            title="Not Helpful"
+                          >
+                            <ThumbsDown size={14} />
+                          </button>
+                        </div>
+                      )}
                       {msg.images && msg.images.length > 0 && (
                         <div className="image-carousel" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '8px', paddingBottom: '4px' }}>
                           {msg.images.map((imgUrl, idx) => (

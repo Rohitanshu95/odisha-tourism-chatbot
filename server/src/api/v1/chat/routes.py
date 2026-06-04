@@ -10,8 +10,10 @@ import logging
 import time
 import re
 from langdetect import detect, LangDetectException
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 logger = logging.getLogger(__name__)
+analyzer = SentimentIntensityAnalyzer()
 
 router = APIRouter()
 
@@ -75,24 +77,24 @@ async def chat_endpoint(request: ChatRequest):
                 
         if not history_loaded:
             chat_histories[request.session_id] = []
-            session_metadata[request.session_id] = {"is_guest": True, "question_count": 0}
+            session_metadata[request.session_id] = {"is_guest": True, "start_time": time.time()}
             
     history = chat_histories[request.session_id]
     meta = session_metadata[request.session_id]
     
     # Ensure keys exist for older sessions
     meta.setdefault("is_guest", True)
-    meta.setdefault("question_count", 0)
+    meta.setdefault("start_time", time.time())
     
     requires_login = False
-    if meta["is_guest"] and meta["question_count"] >= 5:
-        requires_login = True
-        return ChatResponse(
-            response="You have reached the guest limit of 5 queries. Please log in to continue your journey.",
-            requires_login=True
-        )
-    
-    meta["question_count"] += 1
+    if meta["is_guest"]:
+        elapsed = time.time() - meta["start_time"]
+        if elapsed > 120:
+            requires_login = True
+            return ChatResponse(
+                response="Your 2-minute free trial has expired. Please log in to continue your journey.",
+                requires_login=True
+            )
 
     try:
         # Contextualize the message if user location is available
@@ -150,6 +152,9 @@ async def chat_endpoint(request: ChatRequest):
             except LangDetectException:
                 logger.warning(f"Could not detect language for session {request.session_id}")
 
+            sentiment_dict = analyzer.polarity_scores(request.message)
+            sentiment_score = sentiment_dict['compound']
+
             log_entry = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
@@ -158,7 +163,8 @@ async def chat_endpoint(request: ChatRequest):
                 destination=dest,
                 tourism_category=cat,
                 response_time_ms=response_time_ms,
-                language=detected_language
+                language=detected_language,
+                sentiment_score=sentiment_score
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
 
@@ -185,6 +191,15 @@ async def chat_endpoint(request: ChatRequest):
             except LangDetectException:
                 logger.warning(f"Could not detect language for session {request.session_id} on fallback")
 
+            sentiment_dict = analyzer.polarity_scores(request.message)
+            sentiment_score = sentiment_dict['compound']
+
+            # Track consecutive fallbacks
+            meta["consecutive_fallbacks"] = meta.get("consecutive_fallbacks", 0) + 1
+            if meta["consecutive_fallbacks"] >= 2:
+                # If they hit a fallback twice in a row, penalize sentiment heavily
+                sentiment_score -= 0.5 
+
             fallback_log = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
@@ -195,7 +210,8 @@ async def chat_endpoint(request: ChatRequest):
                 tourism_category=cat,
                 gap_category=gap_cat,
                 response_time_ms=int((time.time() - start_time) * 1000) if "start_time" in locals() else None,
-                language=detected_language
+                language=detected_language,
+                sentiment_score=sentiment_score
             )
             await db["telemetry"].insert_one(fallback_log.model_dump())
 
@@ -206,6 +222,24 @@ async def chat_endpoint(request: ChatRequest):
 
 class EndSessionRequest(BaseModel):
     session_id: str
+
+class FeedbackRequest(BaseModel):
+    session_id: str
+    query: str
+    feedback: str # 'Positive' or 'Negative'
+
+@router.post("/feedback")
+async def submit_feedback(request: FeedbackRequest):
+    db = get_db()
+    if db is not None:
+        # Update the most recent telemetry log matching this session and query
+        result = await db["telemetry"].update_many(
+            {"session_id": request.session_id, "query": request.query},
+            {"$set": {"explicit_feedback": request.feedback}}
+        )
+        if result.modified_count > 0:
+            return {"status": "success"}
+    return {"status": "failed"}
 
 @router.post("/end")
 async def end_session(request: EndSessionRequest):
