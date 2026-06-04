@@ -1,17 +1,54 @@
 from fastapi import APIRouter, HTTPException, Response
 from src.config.db import get_db
 import logging
+from bson import ObjectId
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 from datetime import datetime, timedelta
 
+def get_required_db():
+    db = get_db()
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not initialized")
+    return db
+
+def serialize_mongo_value(value):
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, list):
+        return [serialize_mongo_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: serialize_mongo_value(item) for key, item in value.items()}
+    return value
+
+def date_matches_filter(value, date_filter):
+    if not date_filter:
+        return True
+    if not value:
+        return False
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            return False
+
+    start = date_filter.get("$gte")
+    end = date_filter.get("$lt")
+    if start and value < start:
+        return False
+    if end and value >= end:
+        return False
+    return True
+
 @router.get("/summaries")
 async def get_all_summaries(response: Response, start_date: str = None, end_date: str = None):
     """Fetch all users and their chat summaries for the admin dashboard."""
     try:
-        db = get_db()
+        db = get_required_db()
         
         date_filter = {}
         if start_date:
@@ -39,22 +76,30 @@ async def get_all_summaries(response: Response, start_date: str = None, end_date
         summaries_cursor = db.chat_summaries.find(summary_match_query)
         summaries = await summaries_cursor.to_list(length=10000)
         
+        # Count all summaries per user across all time to determine returning users
+        pipeline = [{"$group": {"_id": "$user_id", "count": {"$sum": 1}}}]
+        user_summary_counts = await db.chat_summaries.aggregate(pipeline).to_list(length=10000)
+        user_summary_count_map = {str(item["_id"]): item["count"] for item in user_summary_counts}
+        
         enriched_summaries = []
         seen_user_ids = set()
         
         for summary in summaries:
             summary["_id"] = str(summary["_id"])
             user_id_str = str(summary.get("user_id"))
+            summary["user_id"] = user_id_str
             user_info = user_dict.get(user_id_str)
             if user_info:
                 summary["user_name"] = user_info.get("name", "Unknown")
                 summary["user_mobile"] = user_info.get("mobile", "Unknown")
                 summary["user_email"] = user_info.get("email", "Unknown")
+                summary["is_returning"] = user_summary_count_map.get(user_id_str, 0) > 1
                 seen_user_ids.add(user_id_str)
             else:
                 summary["user_name"] = "Guest/Unknown"
                 summary["user_mobile"] = "N/A"
                 summary["user_email"] = "Guest"
+                summary["is_returning"] = False
                 
             enriched_summaries.append(summary)
             
@@ -64,9 +109,8 @@ async def get_all_summaries(response: Response, start_date: str = None, end_date
                 user_created_at = user_info.get("created_at")
                 
                 # If a date filter is active, only include users who registered on that date
-                if date_filter and user_created_at:
-                    if not (date_filter.get("$gte") <= user_created_at < date_filter.get("$lt")):
-                        continue
+                if not date_matches_filter(user_created_at, date_filter):
+                    continue
                         
                 enriched_summaries.append({
                     "_id": f"user_{user_id_str}",
@@ -76,11 +120,12 @@ async def get_all_summaries(response: Response, start_date: str = None, end_date
                     "created_at": user_created_at,
                     "user_name": user_info.get("name", "Unknown"),
                     "user_email": user_info.get("email", "Unknown"),
-                    "user_mobile": user_info.get("mobile", "Unknown")
+                    "user_mobile": user_info.get("mobile", "Unknown"),
+                    "is_returning": False
                 })
             
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        return {"summaries": enriched_summaries}
+        return {"summaries": serialize_mongo_value(enriched_summaries)}
         
     except Exception as e:
         logger.error(f"Error fetching admin summaries: {e}")
@@ -92,9 +137,7 @@ from datetime import datetime, timedelta
 async def get_analytics_dashboard(response: Response, start_date: str = None, end_date: str = None):
     """Fetch telemetry data for the admin analytics dashboard."""
     try:
-        db = get_db()
-        if db is None:
-            raise HTTPException(status_code=500, detail="Database not initialized")
+        db = get_required_db()
             
         # Base query filter
         match_query = {}

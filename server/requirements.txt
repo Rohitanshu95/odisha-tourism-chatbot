@@ -16,3 +16,4 @@ pydantic-settings
 email-validator
 better_profanity
 bleach
+langdetect

@@ -66,7 +66,7 @@ const SectionDemographics = ({ demographicsData }) => {
                   cy="50%"
                   outerRadius={85}
                   dataKey="value"
-                  label={({value}) => `${value}`}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   labelLine={true}
                 >
                   {languages?.map((entry, index) => (

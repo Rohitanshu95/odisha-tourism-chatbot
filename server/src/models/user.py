@@ -39,6 +39,7 @@ class TelemetryLog(BaseModel):
     is_fallback: bool = False
     is_error: bool = False
     gap_category: Optional[str] = None
+    language: Optional[str] = None
     
 class ChatSummaryModel(BaseModel):
     user_id: str

@@ -9,6 +9,7 @@ from src.services.chat_state import chat_histories, session_metadata, agent_exec
 import logging
 import time
 import re
+from langdetect import detect, LangDetectException
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ router = APIRouter()
 def extract_telemetry(query: str):
     query_lower = query.lower()
     
-    destinations = ["puri", "bhubaneswar", "konark", "cuttack", "chilika", "gopalpur", "simlipal", "bhitarkanika", "daringbadi", "rourkela", "sambalpur"]
+    destinations = ["puri", "bhubaneswar", "konark", "cuttack", "chilika", "gopalpur", "simlipal", "bhitarkanika", "daringbadi", "rourkela", "sambalpur", "balasore", "berhampur", "keonjhar", "mayurbhanj", "koraput"]
     categories = {
         "temples": ["temple", "mandir", "jagannath", "lingaraj", "mukteshwar", "rajrani"],
         "beaches": ["beach", "sea", "ocean", "puri beach", "chandrabhaga", "gopalpur"],
@@ -142,6 +143,13 @@ async def chat_endpoint(request: ChatRequest):
         db = get_db()
         if db is not None:
             dest, cat = extract_telemetry(request.message)
+
+            detected_language = "unknown"
+            try:
+                detected_language = detect(request.message)
+            except LangDetectException:
+                logger.warning(f"Could not detect language for session {request.session_id}")
+
             log_entry = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
@@ -149,37 +157,52 @@ async def chat_endpoint(request: ChatRequest):
                 is_fallback=False,
                 destination=dest,
                 tourism_category=cat,
-                response_time_ms=response_time_ms
+                response_time_ms=response_time_ms,
+                language=detected_language
             )
             await db["telemetry"].insert_one(log_entry.model_dump())
-            
+
         return ChatResponse(response=output_message, requires_login=requires_login)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         print(f"Agent error: {e}")
-        
+
         # Log the failure in telemetry
         db = get_db()
         if db is not None:
             dest, cat = extract_telemetry(request.message)
             gap_cat = "Unknown"
-            if cat: gap_cat = f"{cat} Knowledge"
-            elif dest: gap_cat = f"{dest} Details"
-            
+            if cat:
+                gap_cat = f"{cat} Knowledge"
+            elif dest:
+                gap_cat = f"{dest} Details"
+
+            detected_language = "unknown"
+            try:
+                detected_language = detect(request.message)
+            except LangDetectException:
+                logger.warning(f"Could not detect language for session {request.session_id} on fallback")
+
             fallback_log = TelemetryLog(
                 session_id=request.session_id,
                 query=request.message,
                 is_guest=meta.get("is_guest", True),
                 is_fallback=True,
+                is_error=True,
                 destination=dest,
                 tourism_category=cat,
-                gap_category=gap_cat
+                gap_category=gap_cat,
+                response_time_ms=int((time.time() - start_time) * 1000) if "start_time" in locals() else None,
+                language=detected_language
             )
             await db["telemetry"].insert_one(fallback_log.model_dump())
-            
-        return ChatResponse(response="I'm having trouble retrieving that specific information right now. Please [click here for more info](https://odishatourism.gov.in) on the official portal.")
+
+        return ChatResponse(
+            response="Sorry, I ran into an issue while processing your request. Please try again.",
+            requires_login=requires_login
+        )
 
 class EndSessionRequest(BaseModel):
     session_id: str

@@ -55,7 +55,7 @@ const SectionDemand = ({ demandData }) => {
         <MetricCard title="Accommodation Queries" value={demandData?.accommodation_queries?.toLocaleString() || "0"} icon={Building2} trend={0} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 10 Queried Destinations Bar Chart */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-6">Top 10 Queried Destinations</h3>
@@ -72,34 +72,6 @@ const SectionDemand = ({ demandData }) => {
           </div>
         </div>
 
-        {/* Heat Map Placeholder / Bubble Chart */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 relative">
-          <h3 className="text-sm font-semibold text-slate-700 mb-6">Odisha District Tourism Heat Map</h3>
-          <div className="h-72 w-full relative bg-slate-50 rounded-lg flex items-center justify-center overflow-hidden border border-slate-100">
-            {/* Minimalistic SVG outline for map visual */}
-            <svg viewBox="0 0 100 100" className="absolute w-64 h-64 text-sky-200/50" fill="currentColor">
-              <path d="M 20 50 L 30 20 L 70 15 L 90 40 L 80 80 L 50 90 Z" />
-            </svg>
-            <ResponsiveContainer width="100%" height="100%" className="absolute inset-0">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
-                <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
-                <ZAxis type="number" dataKey="z" range={[100, 2000]} />
-                <Tooltip cursor={{strokeDasharray: '3 3'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Scatter name="Queries" data={heatMapData} fill="#0ea5e9" opacity={0.7} />
-              </ScatterChart>
-            </ResponsiveContainer>
-            {/* Legend Box */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur border border-slate-200 p-2 rounded-md shadow-sm text-[10px]">
-              <p className="font-semibold text-slate-600 mb-1">Query Intensity</p>
-              <div className="flex items-center space-x-1 mb-1"><span className="w-2 h-2 rounded-sm bg-[#0369a1]"></span><span className="text-slate-500">Very High (80+)</span></div>
-              <div className="flex items-center space-x-1 mb-1"><span className="w-2 h-2 rounded-sm bg-[#0ea5e9]"></span><span className="text-slate-500">High (60-79)</span></div>
-              <div className="flex items-center space-x-1 mb-1"><span className="w-2 h-2 rounded-sm bg-[#38bdf8]"></span><span className="text-slate-500">Medium (40-59)</span></div>
-              <div className="flex items-center space-x-1"><span className="w-2 h-2 rounded-sm bg-[#bae6fd]"></span><span className="text-slate-500">Low (&lt;40)</span></div>
-            </div>
-          </div>
-        </div>
-
         {/* Tourism Category Pie Chart */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-6">Tourism Category Distribution</h3>
@@ -112,7 +84,7 @@ const SectionDemand = ({ demandData }) => {
                   cy="50%"
                   outerRadius={80}
                   dataKey="value"
-                  label={({name, value}) => `${name}: ${value}%`}
+                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   labelLine={true}
                 >
                   {displayCategories.map((entry, index) => (

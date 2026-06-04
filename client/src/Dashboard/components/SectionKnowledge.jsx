@@ -28,7 +28,7 @@ const SectionKnowledge = ({ knowledgeData }) => {
         <MetricCard title="Emerging Topics" value={knowledgeData?.emerging_topics?.toLocaleString() || "0"} icon={TrendingUp} trend={0} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Top Unanswered Queries Table */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col h-96">
@@ -50,22 +50,6 @@ const SectionKnowledge = ({ knowledgeData }) => {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* Knowledge Gap Categories Bar Chart */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col h-96">
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">Knowledge Gap Categories</h3>
-          <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={displayGaps} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={true} angle={-45} textAnchor="end" />
-                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={true} />
-                <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="value" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         </div>
 

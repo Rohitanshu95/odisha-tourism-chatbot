@@ -36,21 +36,44 @@ const Dashboard = () => {
     const fetchDashboardData = async (showLoading = true) => {
       try {
         if (showLoading) setLoading(true);
-        const [execRes, demoRes, demandRes, knowRes, opRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/v1/dashboard/executive'),
-          axios.get('http://localhost:8000/api/v1/dashboard/demographics'),
-          axios.get('http://localhost:8000/api/v1/dashboard/demand'),
-          axios.get('http://localhost:8000/api/v1/dashboard/knowledge'),
-          axios.get('http://localhost:8000/api/v1/dashboard/operational'),
-        ]);
+        const requestConfig = {
+          params: { _t: Date.now() },
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+        };
+        const requests = [
+          { key: 'executive', promise: axios.get('http://localhost:8000/api/v1/dashboard/executive', requestConfig) },
+          { key: 'demographics', promise: axios.get('http://localhost:8000/api/v1/dashboard/demographics', requestConfig) },
+          { key: 'demand', promise: axios.get('http://localhost:8000/api/v1/dashboard/demand', requestConfig) },
+          { key: 'knowledge', promise: axios.get('http://localhost:8000/api/v1/dashboard/knowledge', requestConfig) },
+          { key: 'operational', promise: axios.get('http://localhost:8000/api/v1/dashboard/operational', requestConfig) },
+        ];
 
-        setData({
-          executive: execRes.data,
-          demographics: demoRes.data,
-          demand: demandRes.data,
-          knowledge: knowRes.data,
-          operational: opRes.data
+        const results = await Promise.allSettled(requests.map((request) => request.promise));
+        const nextData = {};
+        let failedRequests = 0;
+
+        results.forEach((result, index) => {
+          const { key } = requests[index];
+          if (result.status === 'fulfilled') {
+            nextData[key] = result.value.data;
+          } else {
+            failedRequests += 1;
+            console.error(`Dashboard fetch failed for ${key}:`, result.reason);
+          }
         });
+
+        if (failedRequests === requests.length) {
+          throw new Error('All dashboard database requests failed.');
+        }
+
+        setData((previousData) => ({
+          ...previousData,
+          ...nextData
+        }));
+        setError(null);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
         setError("Failed to load dashboard data. Ensure the backend is running.");

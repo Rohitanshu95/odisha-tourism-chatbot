@@ -50,9 +50,9 @@ function Admin() {
 
   const exportToCSV = () => {
     if (!summaries || summaries.length === 0) return;
-    const headers = ['User Name', 'Email', 'Mobile', 'Created At'];
+    const headers = ['User Name', 'Email', 'Mobile', 'Created At', 'Returning User'];
     const rows = summaries.map(s => [
-      `"${s.user_name || ''}"`, `"${s.user_email || ''}"`, `"${s.user_mobile || ''}"`, `"${s.created_at || ''}"`
+      `"${s.user_name || ''}"`, `"${s.user_email || ''}"`, `"${s.user_mobile || ''}"`, `"${s.created_at || ''}"`, `"${s.is_returning ? 'Yes' : 'No'}"`
     ]);
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -247,7 +247,14 @@ function Admin() {
                 <tbody>
                   {Array.from(new Map(summaries.filter(s => s.user_email && s.user_email !== "Guest").map(user => [user.user_email, user])).values()).map((user, idx) => (
                     <tr key={idx}>
-                      <td style={{ fontWeight: 600 }}>{user.user_name}</td>
+                      <td style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {user.user_name}
+                        {user.is_returning && (
+                          <span className="badge-brutal badge-user" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
+                            RETURNING
+                          </span>
+                        )}
+                      </td>
                       <td>{user.user_email}</td>
                       <td>{user.user_mobile}</td>
                       <td style={{ color: 'var(--admin-text-muted)' }}>{new Date(user.created_at).toLocaleString()}</td>
