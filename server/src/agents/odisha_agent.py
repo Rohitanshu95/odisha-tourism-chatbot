@@ -2,7 +2,7 @@ from langgraph.prebuilt import create_react_agent
 from src.llm.client import get_llm
 from langchain.tools import tool
 
-from src.agents.tools import get_current_weather, get_distance_and_route, estimate_trip_budget, get_tourism_links
+from src.agents.tools import get_current_weather, get_distance_and_route, estimate_trip_budget, get_tourism_links, get_panthanivas_info
 from src.rag.pipeline import get_retriever
 from src.prompts.odisha_prompts import ODISHA_TOURISM_SYSTEM_PROMPT
 
@@ -26,8 +26,9 @@ def create_odisha_agent():
     budget_tool = estimate_trip_budget
     rag_tool = odisha_tourism_knowledge
     link_tool = get_tourism_links
+    pantha_tool = get_panthanivas_info
     
-    tools = [weather_tool, distance_tool, budget_tool, rag_tool, link_tool]
+    tools = [weather_tool, distance_tool, budget_tool, rag_tool, link_tool, pantha_tool]
     
     # 2. Setup LLM via central client
     llm = get_llm(model_name="gemini-2.5-flash", temperature=0)

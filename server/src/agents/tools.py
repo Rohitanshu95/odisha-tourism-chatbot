@@ -165,3 +165,32 @@ def get_tourism_links(query_type: str, district_name: str = None) -> str:
         return f"Error fetching link: {e}"
     
     return "Invalid query."
+
+@tool
+def get_panthanivas_info(location: str) -> str:
+    """Gets the Panthaniwas availability and official booking link for a specific location in Odisha."""
+    panthanivas_db = {
+        "bhubaneswar": "https://www.bookodisha.com/tourism/hotel/panthanivas-bhubaneswar-15",
+        "gopalpur": "https://www.bookodisha.com/tourism/hotel/panthanivas-gopalpur-16",
+        "puri": "https://www.bookodisha.com/tourism/hotel/panthanivas-puri-17",
+        "cuttack": "https://www.bookodisha.com/tourism/hotel/panthanivas-cuttack-18",
+        "konark": "https://www.bookodisha.com/tourism/hotel/yatrinivas-konark-19",
+        "rambha": "https://www.bookodisha.com/tourism/hotel/panthanivas-rambha-20",
+        "chandbali": "https://www.bookodisha.com/tourism/hotel/aranyanivas-chandbali-22",
+        "barkul": "https://www.bookodisha.com/tourism/hotel/panthanivas-barkul-23",
+        "rourkela": "https://www.bookodisha.com/tourism/hotel/panthanivas-rourkela-24",
+        "sambalpur": "https://www.bookodisha.com/tourism/hotel/panthanivas-sambalpur-25",
+        "keonjhar": "https://www.bookodisha.com/tourism/hotel/panthanivas-keonjhar-27",
+        "chandipur": "https://www.bookodisha.com/tourism/hotel/panthanivas-chandipur-29",
+        "chandaneswar": "https://www.bookodisha.com/tourism/hotel/panthasala-chandaneswar-%28talasari%29-31",
+        "talasari": "https://www.bookodisha.com/tourism/hotel/panthasala-chandaneswar-%28talasari%29-31",
+        "bhitarakanika": "https://www.bookodisha.com/tourism/hotel/aranyanivas-bhitarakanika-32",
+        "kendrapara": "https://www.bookodisha.com/tourism/hotel/aranyanivas-bhitarakanika-32"
+    }
+    
+    loc = location.lower().strip()
+    for key, link in panthanivas_db.items():
+        if key in loc:
+            return f"A Panthaniwas is available for {location.title()}. Official Booking Link: {link}"
+            
+    return f"Currently, there is no official Panthaniwas listed in {location.title()}."
