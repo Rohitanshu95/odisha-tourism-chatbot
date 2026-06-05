@@ -3,6 +3,7 @@ uvicorn[standard]
 chromadb
 langchain
 langchain-google-genai
+langchain-openai
 google-genai
 langchain-chroma
 beautifulsoup4

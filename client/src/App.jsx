@@ -7,7 +7,8 @@ import './index.css';
 
 function App() {
   return (
-    <Router>
+    <div className='bg-black h-screen'>
+      <Router>
       <Routes>
         <Route path="/" element={<Widget />} />
         <Route path="/login" element={<Login />} />
@@ -16,6 +17,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </div>
   );
 }
 

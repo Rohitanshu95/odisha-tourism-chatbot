@@ -8,10 +8,13 @@ from langchain_core.documents import Document
 # Ensure env vars are loaded via our robust configuration
 settings = get_settings()
 os.environ["GOOGLE_API_KEY"] = settings.GOOGLE_API_KEY
+if settings.OPENAI_API_KEY:
+    os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
 
 # Setup paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(BASE_DIR, "data", "odisha_tourism_knowledge.json")
+FOOD_DATA_PATH = os.path.join(BASE_DIR, "data", "food.json")
 CHROMA_PATH = os.path.join(BASE_DIR, "vector_store_gemini")
 
 def get_vector_store():
@@ -48,6 +51,23 @@ def initialize_knowledge_base():
             }
         )
         documents.append(doc)
+        
+    if os.path.exists(FOOD_DATA_PATH):
+        with open(FOOD_DATA_PATH, "r", encoding="utf-8") as f:
+            food_data = json.load(f)
+            
+        for item in food_data:
+            district = item.get("district", "Unknown")
+            foods = ", ".join(item.get("foods", []))
+            doc = Document(
+                page_content=f"The best and most famous local foods in {district} district are: {foods}.",
+                metadata={
+                    "category": "Food",
+                    "topic": f"Food in {district}",
+                    "url": "https://odishatourism.gov.in/"
+                }
+            )
+            documents.append(doc)
 
     print(f"Indexing {len(documents)} documents into Chroma...")
     vector_store = get_vector_store()

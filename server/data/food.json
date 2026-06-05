@@ -1,0 +1,332 @@
+[
+  {
+    "district": "Angul",
+    "foods": [
+      "Chhena Poda",
+      "Manda Pitha",
+      "Arisa Pitha",
+      "Dalma",
+      "Santula",
+      "Chhena Gaja"
+    ]
+  },
+  {
+    "district": "Balangir",
+    "foods": [
+      "Mudhi Mansa",
+      "Mutton Curry",
+      "Chakuli Pitha",
+      "Bara Ghuguni",
+      "Mandia Peja",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Balasore",
+    "foods": [
+      "Chingudi Jhola",
+      "Ilish Bhaja",
+      "Crab Curry",
+      "Macha Besara",
+      "Rasagola",
+      "Chhena Jhili"
+    ]
+  },
+  {
+    "district": "Bargarh",
+    "foods": [
+      "Mudhi Mansa",
+      "Kadali Manja Rai",
+      "Mutton Curry",
+      "Chakuli Pitha",
+      "Mandia Jau",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Bhadrak",
+    "foods": [
+      "Ilish Machha Curry",
+      "Chingudi Malai Curry",
+      "Macha Besara",
+      "Rasabali",
+      "Khaja",
+      "Chhena Gaja"
+    ]
+  },
+  {
+    "district": "Boudh",
+    "foods": [
+      "Chakuli Pitha",
+      "Dalma",
+      "Santula",
+      "Arisa Pitha",
+      "Chhena Poda",
+      "Manda Pitha"
+    ]
+  },
+  {
+    "district": "Cuttack",
+    "foods": [
+      "Dahi Bara Aloo Dum",
+      "Chhena Gaja",
+      "Rasagola",
+      "Chhena Jhili",
+      "Bara Ghuguni",
+      "Chaat"
+    ]
+  },
+  {
+    "district": "Deogarh",
+    "foods": [
+      "Mandia Jau",
+      "Dalma",
+      "Santula",
+      "Arisa Pitha",
+      "Manda Pitha",
+      "Mahura"
+    ]
+  },
+  {
+    "district": "Dhenkanal",
+    "foods": [
+      "Chhena Poda",
+      "Dalma",
+      "Manda Pitha",
+      "Arisa Pitha",
+      "Santula",
+      "Chhena Jhili"
+    ]
+  },
+  {
+    "district": "Gajapati",
+    "foods": [
+      "Bamboo Shoot Curry",
+      "Mandia Peja",
+      "Tribal Chicken Curry",
+      "Mahura",
+      "Santula",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Ganjam",
+    "foods": [
+      "Ganjam Mutton Curry",
+      "Prawn Curry",
+      "Fish Curry",
+      "Chakuli Pitha",
+      "Khata",
+      "Rasabali"
+    ]
+  },
+  {
+    "district": "Jagatsinghpur",
+    "foods": [
+      "Crab Curry",
+      "Chingudi Curry",
+      "Fish Besara",
+      "Dalma",
+      "Khaja",
+      "Rasagola"
+    ]
+  },
+  {
+    "district": "Jajpur",
+    "foods": [
+      "Macha Besara",
+      "Chingudi Curry",
+      "Dalma",
+      "Chhena Gaja",
+      "Arisa Pitha",
+      "Santula"
+    ]
+  },
+  {
+    "district": "Jharsuguda",
+    "foods": [
+      "Mudhi Mansa",
+      "Mutton Curry",
+      "Mandia Peja",
+      "Bara Ghuguni",
+      "Arisa Pitha",
+      "Santula"
+    ]
+  },
+  {
+    "district": "Kalahandi",
+    "foods": [
+      "Mandia Peja",
+      "Bamboo Shoot Curry",
+      "Tribal Chicken",
+      "Chakuli Pitha",
+      "Mahura",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Kandhamal",
+    "foods": [
+      "Kandhamal Haldi Dishes",
+      "Bamboo Shoot Curry",
+      "Tribal Chicken",
+      "Mandia Jau",
+      "Mahura",
+      "Santula"
+    ]
+  },
+  {
+    "district": "Kendrapara",
+    "foods": [
+      "Rasabali",
+      "Fish Curry",
+      "Crab Curry",
+      "Chingudi Curry",
+      "Khaja",
+      "Chhena Gaja"
+    ]
+  },
+  {
+    "district": "Kendujhar",
+    "foods": [
+      "Bamboo Shoot Curry",
+      "Mushroom Curry",
+      "Mandia Peja",
+      "Tribal Chicken",
+      "Dalma",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Khordha",
+    "foods": [
+      "Dahi Bara Aloo Dum",
+      "Chhena Jhili",
+      "Dalma",
+      "Santula",
+      "Chhena Poda",
+      "Rasagola"
+    ]
+  },
+  {
+    "district": "Koraput",
+    "foods": [
+      "Bamboo Chicken",
+      "Mandia Jau",
+      "Tribal Pork Curry",
+      "Bamboo Shoot Curry",
+      "Coffee-based Desserts",
+      "Mahura"
+    ]
+  },
+  {
+    "district": "Malkangiri",
+    "foods": [
+      "Bamboo Chicken",
+      "Millet Dishes",
+      "Tribal Pork Curry",
+      "Bamboo Shoot Curry",
+      "Mandia Peja",
+      "Mahura"
+    ]
+  },
+  {
+    "district": "Mayurbhanj",
+    "foods": [
+      "Mutton Curry",
+      "Santula",
+      "Chakuli Pitha",
+      "Mahura",
+      "Chhena Poda",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Nabarangpur",
+    "foods": [
+      "Bamboo Shoot Curry",
+      "Millet Roti",
+      "Tribal Chicken Curry",
+      "Mandia Jau",
+      "Mahura",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Nayagarh",
+    "foods": [
+      "Chhena Poda",
+      "Dalma",
+      "Santula",
+      "Manda Pitha",
+      "Arisa Pitha",
+      "Chhena Gaja"
+    ]
+  },
+  {
+    "district": "Nuapada",
+    "foods": [
+      "Mandia Peja",
+      "Mudhi Mansa",
+      "Mutton Curry",
+      "Millet Roti",
+      "Mahura",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Puri",
+    "foods": [
+      "Mahaprasad",
+      "Khaja",
+      "Dalma",
+      "Kheeri",
+      "Chhena Poda",
+      "Rasabali"
+    ]
+  },
+  {
+    "district": "Rayagada",
+    "foods": [
+      "Bamboo Chicken",
+      "Tribal Pork Curry",
+      "Mandia Jau",
+      "Bamboo Shoot Curry",
+      "Mahura",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Sambalpur",
+    "foods": [
+      "Mudhi Mansa",
+      "Sambalpuri Mutton Curry",
+      "Bara Ghuguni",
+      "Arisa Pitha",
+      "Mandia Peja",
+      "Santula"
+    ]
+  },
+  {
+    "district": "Subarnapur",
+    "foods": [
+      "Rasabali",
+      "Chhena Poda",
+      "Dalma",
+      "Santula",
+      "Manda Pitha",
+      "Arisa Pitha"
+    ]
+  },
+  {
+    "district": "Sundargarh",
+    "foods": [
+      "Tribal Smoked Meat",
+      "Mudhi Mansa",
+      "Bamboo Shoot Curry",
+      "Mandia Peja",
+      "Mahura",
+      "Arisa Pitha"
+    ]
+  }
+]
