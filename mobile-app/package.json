@@ -1,0 +1,25 @@
+{
+  "name": "mobile-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.17.0",
+    "expo": "~56.0.9",
+    "expo-location": "~56.0.16",
+    "expo-speech": "~56.0.3",
+    "expo-speech-recognition": "^56.0.1",
+    "expo-status-bar": "~56.0.4",
+    "lucide-react-native": "^1.17.0",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
+}

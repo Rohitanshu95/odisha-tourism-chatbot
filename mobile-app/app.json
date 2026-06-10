@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "mobile-app",
+    "slug": "mobile-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/tourism.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#C1440E",
+        "foregroundImage": "./assets/tourism.png"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.rohitanshudhar.mobileapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-speech-recognition"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "59f3dd87-6360-4f0b-bc6d-7e7db8ef6a4f"
+      }
+    }
+  }
+}
